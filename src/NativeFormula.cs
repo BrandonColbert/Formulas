@@ -8,7 +8,7 @@ using Microsoft.CSharp;
 
 namespace Formulas {
 	public static class NativeFormula {
-		static readonly string folder ="natforms";
+		static readonly string folder = "natforms";
 
 		static NativeFormula() {
 			//Create directory to store compiled formulas
@@ -22,63 +22,11 @@ namespace Formulas {
 				Directory.Delete(folder, true);
 		}
 
-		/// <param name="other">Formula to compile from</param>
-		/// <returns>Compiles the formula into a direct formula</returns>
-		public static IFormula CompileDirect(Formula other, (object[], int[], List<KeyValuePair<char, object>>, int) data) {
-			//Copy description and variables
-			var description = String.Copy(other.description);
-			var variables = other.variables.ToArray();
-
-			//Destructure data into components
-			var (symbols, order, mappings, inputCount) = data;
-			symbols = symbols.ToArray();
-
-			//Construct solution function body
-			foreach(var index in order) {
-				symbols[index - 1] = $@"({Express(
-					symbols[index - 1].ToString(),
-					((CharSymbol)symbols[index]).value,
-					symbols[index + 1].ToString()
-				)})";
-
-				Array.Copy(symbols, index + 2, symbols, index, symbols.Length - 2 - index);
-			}
-
-			//Compile
-			var solver = Compile($@"
-				using Formulas;
-
-				public static class Solver {{
-					{(inputCount > 0 ? $"public static dynamic {string.Join(", ", mappings.Take(inputCount).Select(p => p.Key))};" : string.Empty)}
-
-					public static void Init(dynamic[] input) {{
-						{string.Join("\n", mappings.Take(inputCount).Select((p, i) => $"{p.Key} = input[{i}];"))}
-					}}
-
-					public static object Solve(dynamic[] input) {{
-						{string.Join("\n", mappings.Skip(inputCount).Select((p, i) => $"var {p.Key} = input[{i}];"))}
-
-						return {symbols[0].ToString()};
-					}}
-				}}
-			", "Solver");
-			
-			//Get functions from compilation
-			var init = Delegate.CreateDelegate(typeof(Action<dynamic[]>), solver.GetMethod("Init")) as Action<dynamic[]>;
-			var solve = Delegate.CreateDelegate(typeof(Func<dynamic[], object>), solver.GetMethod("Solve")) as Func<dynamic[], object>;
-
-			//Update solver using compiled formula
-			init(mappings.Take(inputCount).Select(p => p.Value).ToArray());
-
-			return new DirectFormula(solve);
-		}
-
 		/// <param name="other">Formula to compile</param>
-		/// <returns>Compiles the formula into a custom IFormula class</returns>
-		public static IFormula Compile(Formula other, (object[], int[], List<KeyValuePair<char, object>>, int) data) {
+		/// <returns>An IFormula compiled with the native scripting language</returns>
+		public static IFormula Compile(string description, params object[] input) {
 			//Destructure data into components
-			var (symbols, order, mappings, inputCount) = data;
-			symbols = symbols.ToArray();
+			var (symbols, order, mapping, inputCount) = Formulizer.Build(description, input);
 
 			//Construct solution function body
 			foreach(var index in order) {
@@ -95,42 +43,41 @@ namespace Formulas {
 			var formula = Compile($@"
 				using Formulas;
 
-				public sealed class NFormula : IFormula {{
+				public sealed class SpecializedFormula : IFormula {{
 					public string description {{ get; private set; }}
 					public char[] variables {{ get; private set; }}
-					{(inputCount > 0 ? $"public dynamic {string.Join(", ", mappings.Take(inputCount).Select(p => p.Key))};" : string.Empty)}
+					{(inputCount > 0 ? $"public dynamic {string.Join(", ", mapping.Take(inputCount).Select(p => p.Key))};" : string.Empty)}
 
-					public NFormula(string description, char[] variables, dynamic[] input) {{
+					public SpecializedFormula(string description, char[] variables, dynamic[] input) {{
 						this.description = description;
 						this.variables = variables;
-						{string.Join("\n", mappings.Take(inputCount).Select((p, i) => $"{p.Key} = input[{i}];"))}
+						{string.Join("\n", mapping.Take(inputCount).Select((p, i) => $"{p.Key} = input[{i}];"))}
 					}}
 
 					public object Solve(dynamic[] input) {{
-						{string.Join("\n", mappings.Skip(inputCount).Select((p, i) => $"var {p.Key} = input[{i}];"))}
+						{string.Join("\n", mapping.Skip(inputCount).Select((p, i) => $"var {p.Key} = input[{i}];"))}
 
 						return {symbols[0].ToString()};
 					}}
 				}}
-			", "NFormula");
+			", "SpecializedFormula");
 
 			return Activator.CreateInstance(
 				formula,
-				String.Copy(other.description),
-				other.variables.ToArray(),
-				mappings.Take(inputCount).Select(p => p.Value).ToArray()
+				description,
+				mapping.Select(v => v.Key).ToArray(),
+				mapping.Take(inputCount).Select(p => p.Value).ToArray()
 			) as IFormula;
 		}
 
 		static string Express(string lhs, char op, string rhs) {
 			switch(op) {
-				case '^': return $"(float)Math.Pow({lhs}, {rhs})";
+				case '^': return $"(float)System.Math.Pow({lhs}, {rhs})";
 				case '*': return $"NativeFormula.Multiply({lhs}, {rhs})";
 				case '/': return $"NativeFormula.Divide({lhs}, {rhs})";
 				case '%': return $"NativeFormula.Modulus({lhs}, {rhs})";
 				case '+': return $"NativeFormula.Add({lhs}, {rhs})";
 				case '-': return $"NativeFormula.Subtract({lhs}, {rhs})";
-				//case '*': case '/': case '%': case '+': case '-': return $"{lhs} {op} {rhs}";
 				case '.': return $"{lhs}.{rhs}";
 				case ':': return $"{lhs}[\"{rhs}\"]";
 				case '@': return functions[lhs](rhs);
