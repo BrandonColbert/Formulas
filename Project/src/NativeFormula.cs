@@ -29,37 +29,44 @@ namespace Formulas {
 			var (symbols, order, mapping, inputCount) = Formulizer.Build(description, input);
 
 			//Construct solution function body
-			foreach(var index in order) {
-				symbols[index - 1] = $@"({Express(
+			var lines = new Queue<string>();
+			for(var i = 0; i < order.Length; i++) {
+				var index = order[i];
+
+				lines.Enqueue($@"var n{i} = {Express(
 					symbols[index - 1].ToString(),
 					((CharSymbol)symbols[index]).value,
 					symbols[index + 1].ToString()
-				)})";
+				)};");
+
+				symbols[index - 1] = $"n{i}";
 
 				Array.Copy(symbols, index + 2, symbols, index, symbols.Length - 2 - index);
 			}
 
 			//Compile
 			var formula = Compile($@"
-				using Formulas;
+using Formulas;
 
-				public sealed class SpecializedFormula : IFormula {{
-					public string description {{ get; private set; }}
-					public char[] variables {{ get; private set; }}
-					{(inputCount > 0 ? $"public dynamic {string.Join(", ", mapping.Take(inputCount).Select(p => p.Key))};" : string.Empty)}
+public sealed class SpecializedFormula : IFormula {{
+	public string description {{ get; private set; }}
+	public char[] variables {{ get; private set; }}
+	{(inputCount > 0 ? $"public dynamic {string.Join(", ", mapping.Take(inputCount).Select(p => p.Key))};" : string.Empty)}
 
-					public SpecializedFormula(string description, char[] variables, dynamic[] input) {{
-						this.description = description;
-						this.variables = variables;
-						{string.Join("\n", mapping.Take(inputCount).Select((p, i) => $"{p.Key} = input[{i}];"))}
-					}}
+	public SpecializedFormula(string description, char[] variables, dynamic[] input) {{
+		this.description = description;
+		this.variables = variables;
+		{string.Join("\n\t\t", mapping.Take(inputCount).Select((p, i) => $"{p.Key} = input[{i}];"))}
+	}}
 
-					public object Solve(dynamic[] input) {{
-						{string.Join("\n", mapping.Skip(inputCount).Select((p, i) => $"var {p.Key} = input[{i}];"))}
+	public object Solve(dynamic[] input) {{
+		{string.Join("\n\t\t", mapping.Skip(inputCount).Select((p, i) => $"var {p.Key} = input[{i}];"))}
 
-						return {symbols[0].ToString()};
-					}}
-				}}
+		{string.Join("\n\t\t", lines)}
+
+		return {symbols[0]};
+	}}
+}}
 			", "SpecializedFormula");
 
 			return Activator.CreateInstance(
