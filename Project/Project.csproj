@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net47</TargetFramework>
     <AssemblyName>Formulas</AssemblyName>
+	<GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
