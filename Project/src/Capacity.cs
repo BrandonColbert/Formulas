@@ -3,18 +3,17 @@ using System.Collections.Generic;
 
 namespace Formulas {
 	/// <summary>Allows a certain amount of objects to be cached</summary>
-	public class Capacity {
+	class Capacity {
 		/// <summary>Maximum number of types to store information on at once</summary>
 		public int max {
 			get => _max;
 			set {
+				_max = value;
 				if(cache.Count > value)
 					for(var i = cache.Count - value - 1; i >= 0; i--) {
 						cache.Remove(types.First.Value);
 						types.RemoveFirst();
 					}
-
-				_max = value;
 			}
 		}
 
@@ -22,6 +21,7 @@ namespace Formulas {
 		private LinkedList<Type> types = new LinkedList<Type>(); //Use a LinkedHashSet equivalent extend for faster finds
 		private int _max;
 
+		/// <param name="max">Maximum amount of items to cache</param>
 		public Capacity(int max) => _max = max;
 
 		/// <summary>Stores a value related to a type with a key</summary>

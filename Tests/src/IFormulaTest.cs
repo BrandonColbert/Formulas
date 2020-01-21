@@ -26,7 +26,7 @@ abstract class IFormulaTest {
 	[TestCase(1, ExpectedResult=1)] public object Single_PostInput(int a) => TimeSolve(TimeBuild("x"), a);
 	[TestCase(1, 2, ExpectedResult=3)] public object Single_PreInput_Single_PostInput(int a, int b) => TimeSolve(TimeBuild("x + y", a), b);
 	[TestCase(1, 2, ExpectedResult=3)] public object Multiple_PreInput(int a, int b) => TimeSolve(TimeBuild("x + y", a, b));
-	[TestCase(1, 2, ExpectedResult=3)] public object Multiple_PostInput(int a, int b) => TimeSolve(TimeBuild("x + y"), a,b);
+	[TestCase(1, 2, ExpectedResult=3)] public object Multiple_PostInput(int a, int b) => TimeSolve(TimeBuild("x + y"), a, b);
 	[TestCase(1, ExpectedResult=1)] public object Mapped_Single_PreInput(int a) => TimeSolve(TimeBuild("f(x) = x", a));
 	[TestCase(1, ExpectedResult=1)] public object Mapped_Single_PostInput(int a) => TimeSolve(TimeBuild("f(x) = x"), a);
 	[TestCase(1, 2, ExpectedResult=3)] public object Mapped_Multiple_PreInput(int a, int b) => TimeSolve(TimeBuild("f(x, y) = x + y", a, b));
@@ -58,7 +58,7 @@ abstract class IFormulaTest {
 	[TestCase(1, 2, 3)] public void Quaternion_Vec(float x, float y, float z) => Assert.AreEqual(Formulizer.Provider.Vec(Quaternion.CreateFromYawPitchRoll(y, x, z)), TimeSolve(TimeBuild("vec(v)"), Quaternion.CreateFromYawPitchRoll(y, x, z)));
 
 	//Stress
-	[Test] public void Stress1() => TimeSolve(TimeBuild($"2 * ((3 - 4) + (5 / (6 + 7)) - 1 + 8 % 3"));
+	[TestCase(ExpectedResult=542)] public object Stress1() => TimeSolve(TimeBuild("(4 * 3|2 + 7|5 + 3 / (2 + 4)^5 + 2)"));
 
 	protected abstract IFormula Build(string formula, params object[] inputs);
 

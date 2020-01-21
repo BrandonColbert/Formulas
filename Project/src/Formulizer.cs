@@ -63,8 +63,7 @@ namespace Formulas {
 				}
 			}
 
-			/// <summary>Push value/variable/access to symbol list</summary>
-			/// <returns>Whether a value was pushed</returns>
+			//Push value/variable/access to symbol list and return whether a value was pushed
 			Func<bool> pushValue = () => {
 				//Only push a value if one exists
 				if(value.Count > 0) {
@@ -94,7 +93,7 @@ namespace Formulas {
 					var subvalue = new StringBuilder();
 					var chained = false;
 
-					/// <summary>Push the number to symbols if it exists</summary>
+					//Push the number to symbols if it exists
 					Action pushNumber = () => {
 						if(subvalue.Length > 0) {
 							if(chained)
@@ -269,8 +268,7 @@ namespace Formulas {
 			//Determine the solving order
 			var order = new List<int>();
 
-			/// <summary>Pushes the order for the symbol into the list and nullifies the symbol</summary>
-			/// <value>Index of the symbol</value>
+			//Pushes the order for the symbol into the list and nullifies the symbol and returns the index of the symbol
 			Action<int> pushOrder = index => {
 				symbols[index] = null;
 				order.Add(index);

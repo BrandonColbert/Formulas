@@ -2,217 +2,95 @@ using System;
 using System.Numerics;
 
 namespace Formulas {
+	/// <summary>Default provider for all formula methods</summary>
 	public class DefaultFormulaProvider : IFormulaProvider {
 		Random rand = new Random();
 
-		public object Sin(object value) {
-			switch(value) {
-				case double v: return Math.Sin(v);
-				case int v: return Math.Sin(v);
-				case long v: return Math.Sin(v);
-				case float v: return Math.Sin(v);
-				default: throw new NotImplementedException();
-			}
-		}
+		/// <summary>sin</summary>
+		public virtual Number Sin(Number value) => Math.Sin(value);
 
-		public object Asin(object value) {
-			switch(value) {
-				case double v: return Math.Asin(v);
-				case int v: return Math.Asin(v);
-				case long v: return Math.Asin(v);
-				case float v: return Math.Asin(v);
-				default: throw new NotImplementedException();
-			}
-		}
+		/// <summary>asin</summary>
+		public virtual Number Asin(Number value) => Math.Asin(value);
 
-		public object Cos(object value) {
-			switch(value) {
-				case double v: return Math.Cos(v);
-				case int v: return Math.Cos(v);
-				case long v: return Math.Cos(v);
-				case float v: return Math.Cos(v);
-				default: throw new NotImplementedException();
-			}
-		}
+		/// <summary>cos</summary>
+		public virtual Number Cos(Number value) => Math.Cos(value);
 
-		public object Acos(object value) {
-			switch(value) {
-				case double v: return Math.Acos(v);
-				case int v: return Math.Acos(v);
-				case long v: return Math.Acos(v);
-				case float v: return Math.Acos(v);
-				default: throw new NotImplementedException();
-			}
-		}
+		/// <summary>acos</summary>
+		public virtual Number Acos(Number value) => Math.Acos(value);
 
-		public object Tan(object value) {
-			switch(value) {
-				case double v: return Math.Tan(v);
-				case int v: return Math.Tan(v);
-				case long v: return Math.Tan(v);
-				case float v: return Math.Tan(v);
-				default: throw new NotImplementedException();
-			}
-		}
+		/// <summary>tan</summary>
+		public virtual Number Tan(Number value) => Math.Tan(value);
 
-		public object Atan(object value) {
-			switch(value) {
-				case double v: return Math.Atan(v);
-				case int v: return Math.Atan(v);
-				case long v: return Math.Atan(v);
-				case float v: return Math.Atan(v);
-				default: throw new NotImplementedException();
-			}
-		}
+		/// <summary>atan</summary>
+		public virtual Number Atan(Number value) => Math.Atan(value);
 
-		public object Sqrt(object value) {
-			switch(value) {
-				case double v: return Math.Sqrt(v);
-				case int v: return Math.Sqrt(v);
-				case long v: return Math.Sqrt(v);
-				case float v: return Math.Sqrt(v);
-				default: throw new NotImplementedException();
-			}
-		}
+		/// <summary>sqrt</summary>
+		public virtual Number Sqrt(Number value) => Math.Sqrt(value);
 
-		public object Ln(object value) {
-			switch(value) {
-				case double v: return Math.Log(v);
-				case int v: return Math.Log(v);
-				case long v: return Math.Log(v);
-				case float v: return Math.Log(v);
-				default: throw new NotImplementedException();
-			}
-		}
+		/// <summary>ln</summary>
+		public virtual Number Ln(Number value) => Math.Log(value);
 
-		public object Log(object value) {
-			switch(value) {
-				case double v: return Math.Log10(v);
-				case int v: return Math.Log10(v);
-				case long v: return Math.Log10(v);
-				case float v: return Math.Log10(v);
-				default: throw new NotImplementedException();
-			}
-		}
+		/// <summary>log</summary>
+		public virtual Number Log(Number value) => Math.Log10(value);
 
-		public object Sgn(object value) {
-			switch(value) {
-				case double v: return Math.Sign(v);
-				case int v: return Math.Sign(v);
-				case long v: return Math.Sign(v);
-				case float v: return Math.Sign(v);
-				default: throw new NotImplementedException();
-			}
-		}
+		/// <summary>sgn</summary>
+		public virtual Number Sgn(Number value) => Math.Sign(value);
 
-		public object Rvs(object value) {
-			switch(value) {
-				case double v: return Vector3.UnitX * (float)v;
-				case int v: return Vector3.UnitX * v;
-				case long v: return Vector3.UnitX * v;
-				case float v: return Vector3.UnitX * v;
-				default: throw new NotImplementedException();
-			}
-		}
+		/// <summary>rvs</summary>
+		public virtual object Rvs(Number value) => Vector3.UnitX * value;
 
-		public object Lvs(object value) {
-			switch(value) {
-				case double v: return -Vector3.UnitX * (float)v;
-				case int v: return -Vector3.UnitX * v;
-				case long v: return -Vector3.UnitX * v;
-				case float v: return -Vector3.UnitX * v;
-				default: throw new NotImplementedException();
-			}
-		}
+		/// <summary>lvs</summary>
+		public virtual object Lvs(Number value) => -Vector3.UnitX * value;
 
-		public object Uvs(object value) {
-			switch(value) {
-				case double v: return Vector3.UnitY * (float)v;
-				case int v: return Vector3.UnitY * v;
-				case long v: return Vector3.UnitY * v;
-				case float v: return Vector3.UnitY * v;
-				default: throw new NotImplementedException();
-			}
-		}
+		/// <summary>uvs</summary>
+		public virtual object Uvs(Number value) => Vector3.UnitY * value;
 
-		public object Dvs(object value) {
-			switch(value) {
-				case double v: return -Vector3.UnitY * (float)v;
-				case int v: return -Vector3.UnitY * v;
-				case long v: return -Vector3.UnitY * v;
-				case float v: return -Vector3.UnitY * v;
-				default: throw new NotImplementedException();
-			}
-		}
+		/// <summary>dvs</summary>
+		public virtual object Dvs(Number value) => -Vector3.UnitY * value;
 
-		public object Fvs(object value) {
-			switch(value) {
-				case double v: return Vector3.UnitZ * (float)v;
-				case int v: return Vector3.UnitZ * v;
-				case long v: return Vector3.UnitZ * v;
-				case float v: return Vector3.UnitZ * v;
-				default: throw new NotImplementedException();
-			}
-		}
+		/// <summary>fvs</summary>
+		public virtual object Fvs(Number value) => Vector3.UnitZ * value;
 
-		public object Bvs(object value) {
-			switch(value) {
-				case double v: return -Vector3.UnitZ * (float)v;
-				case int v: return -Vector3.UnitZ * v;
-				case long v: return -Vector3.UnitZ * v;
-				case float v: return -Vector3.UnitZ * v;
-				default: throw new NotImplementedException();
-			}
-		}
+		/// <summary>bvs</summary>
+		public virtual object Bvs(Number value) => -Vector3.UnitZ * value;
 
-		public object Rnd(object value) {
-			switch(value) {
-				case double v: return rand.NextDouble() * v;
-				case int v: return rand.NextDouble() * v;
-				case long v: return rand.NextDouble() * v;
-				case float v: return rand.NextDouble() * v;
-				default: throw new NotImplementedException();
-			}
-		}
+		/// <summary>rnd</summary>
+		public virtual object Rnd(Number value) => rand.NextDouble() * value;
 
-		public object Abs(object value) {
+		/// <summary>abs</summary>
+		public virtual object Abs(object value) {
 			switch(value) {
-				case double v: return  Math.Abs(v);
-				case int v: return  Math.Abs(v);
-				case long v: return  Math.Abs(v);
-				case float v: return  Math.Abs(v);
 				case Vector2 v: return v.Length();
 				case Vector3 v: return v.Length();
 				case Vector4 v: return v.Length();
-				default: throw new NotImplementedException();
+				default: return Number.TryParse(value, out var n) ? Math.Abs(n) : throw new NotImplementedException();
 			}
 		}
 
-		public object Nml(object value) {
+		/// <summary>nml</summary>
+		public virtual object Nml(object value) {
 			switch(value) {
-				case double v: return  v / Math.Abs(v);
-				case int v: return  v / Math.Abs(v);
-				case long v: return  v / Math.Abs(v);
-				case float v: return  v / Math.Abs(v);
 				case Vector2 v: return Vector2.Normalize(v);
 				case Vector3 v: return Vector3.Normalize(v);
 				case Vector4 v: return Vector4.Normalize(v);
-				default: throw new NotImplementedException();
+				default: return Number.TryParse(value, out var n) ? n / Math.Abs(n) : throw new NotImplementedException();
 			}
 		}
 
-		public object Qtn(object value) {
+		/// <summary>qtn</summary>
+		public virtual object Qtn(object value) {
 			switch(value) {
 				case Vector2 v: return Quaternion.CreateFromYawPitchRoll(v.Y, v.X, 0f);
 				case Vector3 v: return Quaternion.CreateFromYawPitchRoll(v.Y, v.X, v.Z);
-				default: throw new NotImplementedException();
+				default: throw new NotImplementedException($"Not implemented for '{value?.GetType()}'");
 			}
 		}
 
-		public object Vec(object value) {
+		/// <summary>vec</summary>
+		public virtual object Vec(object value) {
 			switch(value) {
 				case Quaternion v: return Vector3.Transform(Vector3.UnitZ, v);
-				default: throw new NotImplementedException();
+				default: throw new NotImplementedException($"Not implemented for '{value?.GetType()}'");
 			}
 		}
 	}
