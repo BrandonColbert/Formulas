@@ -58,11 +58,31 @@ abstract class IFormulaTest {
 	[TestCase(1, 2, 3)] public void Quaternion_Vec(float x, float y, float z) => Assert.AreEqual(Formulizer.Provider.Vec(Quaternion.CreateFromYawPitchRoll(y, x, z)), TimeSolve(TimeBuild("vec(v)"), Quaternion.CreateFromYawPitchRoll(y, x, z)));
 
 	//Stress
-	[TestCase(ExpectedResult=542)] public object Stress1() => TimeSolve(TimeBuild("(4 * 3|2 + 7|5 + 3 / (2 + 4)^5 + 2)"));
+	[Test] public void Stress1() => Approximately(542, TimeSolve(TimeBuild("(4 * 3|2 + 7|5 + 3 / (2 + 4)^5 + 2)")));
+	[TestCase(ExpectedResult=12)] public object Stress2() => TimeSolve(TimeBuild("3 * 2^2"));
+	[TestCase(ExpectedResult=-1)] public object Stress3() => TimeSolve(TimeBuild("2 - (3)"));
+	[TestCase(ExpectedResult=1)] public object Stress4() => TimeSolve(TimeBuild("-(2 - (3))"));
+	[TestCase(ExpectedResult=4)] public object Stress5() => TimeSolve(TimeBuild("-(2 - 2(3))"));
+	[TestCase(ExpectedResult=-10)] public object Stress6() => TimeSolve(TimeBuild("-|2 - (3)4|"));
+	[TestCase(ExpectedResult=7)] public object Stress7() => TimeSolve(TimeBuild("f(b) = (4 - 2)b + 1"), 3);
+	[Test] public void Stress8() => Approximately(130, TimeSolve(TimeBuild("f(z,b,a) = 3a1.1b2 - z", 2, 4), 5));
+	[Test] public void Stress9() => Assert.AreEqual(TimeSolve(TimeBuild("2a4b", new Vector3(1, -2, 3)), 0.5), new Vector3(4, -8, 12));
+	[Test] public void Stress10() => TimeSolve(TimeBuild("f(g,s,t) = g / ((s.X - t.X)^2 + (s.Y - t.Y)^2 + (s.Y - t.Y)^2) * (s - t)"), 1, new Vector3(1, 1.4f, 2), new Vector3(-0.5f, 1.6f, 2.2f));
+	[Test] public void Stress11() => TimeSolve(TimeBuild("(3 + 2)(3 - 1)"));
+	[Test] public void Stress12() => TimeSolve(TimeBuild("((3)(c)) - (c)"), 2);
+	[Test] public void Stress13() => TimeSolve(TimeBuild("|(|3|)(|c|)| - |c|"), 2);
+	[Test] public void Stress14() => TimeSolve(TimeBuild("|x|"), new Vector3(1, 2, 3));
+	[Test] public void Stress15() => TimeSolve(TimeBuild($"2 * ((3 - 4) + (5 / (6 + 7)) - 1 + 8 % 3"));
+
+	//Edge
+	[TestCase(ExpectedResult=75)] public object Edge1() => TimeSolve(TimeBuild("0.75x"), 100);
+	[Test] public void Edge2() => Approximately(1.1, TimeSolve(TimeBuild("1 * 1.1")));
 
 	protected abstract IFormula Build(string formula, params object[] inputs);
 
 	List<double> buildTimes = new List<double>(), solveTimes = new List<double>();
+
+	void Approximately(double lhs, object rhs) => Assert.AreEqual(lhs, (Number)rhs, 0.001);
 
 	object TimeSolve(IFormula formula, params object[] inputs) {
 		var timer = Stopwatch.StartNew();
