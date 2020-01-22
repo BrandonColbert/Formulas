@@ -1,3 +1,5 @@
+using System;
+
 namespace Formulas {
 	/// <summary>Describes a way to convert input values into an output value.</summary>
 	public interface IFormula {
@@ -18,7 +20,7 @@ namespace Formulas {
 			if(result is T v)
 				return v;
 
-			throw new FormulaException("Solution '" + result + "' of type " + result?.ToString() + " could not be converted to " + typeof(T));
+			throw new FormulaException("Solution '" + result + "' of type " + result?.GetType().ToString() + " could not be converted to " + typeof(T));
 		}
 	}
 }
