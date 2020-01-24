@@ -26,9 +26,9 @@ namespace Formulas {
 		/// <param name="description">Description with formula notation</param>
 		/// <param name="input">Initial formula inputs</param>
 		/// <returns>A specialized IFormula compiled in the native scripting language</returns>
-		public static IFormula Compile(string description, params object[] input) {
+		public static IFormula Compile<Provider, Number, Vector, Quaternion>(string description, params object[] input) where Provider : IFormulaProvider<Number, Vector, Quaternion>, new() {
 			//Destructure data into components
-			var (symbols, order, mapping, inputCount) = Formulizer.Build(description, input);
+			var (symbols, order, mapping, inputCount) = new Provider().Build(description, input);
 
 			//Construct solution function body
 			var lines = new Queue<string>();
@@ -39,7 +39,7 @@ namespace Formulas {
 					if(double.TryParse(symbols[j].ToString(), out var _))
 						return $"(Number)({symbols[j].ToString()})";
 
-					return $"(Number.TryParse({symbols[j].ToString()}, out temp) ? temp : {symbols[j].ToString()})";
+					return $"(provider.ToNumber({symbols[j].ToString()}, out temp) ? temp : {symbols[j].ToString()})";
 				};
 
 				string result;
@@ -47,11 +47,11 @@ namespace Formulas {
 				var op = ((CharSymbol)symbols[index]).value;
 
 				switch(op) {
-					case '^': result = $"System.Math.Pow({sof(index - 1)}, {sof(index + 1)})"; break;
+					case '^': result = $"provider.Pow({sof(index - 1)}, {sof(index + 1)})"; break;
 					case '*': case '/': case '%': case '+': case '-': result = $"{sof(index - 1)} {op} {sof(index + 1)}"; break;
 					case '.': result = $"{lhs}.{rhs}"; break;
 					case ':': result = $"{lhs}[\"{rhs}\"]"; break;
-					case '@': result = $"Formulizer.Provider.{lhs.First().ToString().ToUpper()}{lhs.Substring(1)}({rhs})"; break;
+					case '@': result = $"provider.{lhs.First().ToString().ToUpper()}{lhs.Substring(1)}({rhs})"; break;
 					default: throw new FormulaException("Operator '" + op + "' not supported");
 				}
 
@@ -65,6 +65,8 @@ namespace Formulas {
 			var formula = Compile($@"using Formulas;
 
 public sealed class SpecializedFormula : IFormula {{
+	private IFormulaProvider<{typeof(Number).FullName}, {typeof(Vector).FullName}, {typeof(Quaternion).FullName}> provider = new {typeof(Provider).FullName}();
+
 	public string description {{ get; private set; }}
 	public char[] variables {{ get; private set; }}
 	{(inputCount > 0 ? $"public dynamic {string.Join(", ", mapping.Take(inputCount).Select(p => p.Key))};" : string.Empty)}
@@ -78,13 +80,18 @@ public sealed class SpecializedFormula : IFormula {{
 	public object Solve(dynamic[] input) {{
 		{string.Join("\n\t\t", mapping.Skip(inputCount).Select((p, i) => $"var {p.Key} = input[{i}];"))}
 
-		Number temp;
+		{typeof(Number).FullName} temp;
 
 		{string.Join("\n\t\t", lines)}
 
 		return {symbols[0]};
 	}}
-}}", "SpecializedFormula");
+}}", "SpecializedFormula", new HashSet<string>{
+				Assembly.GetAssembly(typeof(Provider)).Location,
+				Assembly.GetAssembly(typeof(Number)).Location,
+				Assembly.GetAssembly(typeof(Vector)).Location,
+				Assembly.GetAssembly(typeof(Quaternion)).Location
+			});
 
 			return Activator.CreateInstance(
 				formula,
@@ -96,8 +103,9 @@ public sealed class SpecializedFormula : IFormula {{
 
 		/// <param name="source">C# source to compile</param>
 		/// <param name="typename">Name of the desired type in the assembly</param>
+		/// <param name="additionalAssemblies">Additional assemblies to include</param>
 		/// <returns>The newly compiled type</returns>
-		static Type Compile(string source, string typename) {
+		static Type Compile(string source, string typename, IEnumerable<string> additionalAssemblies) {
 			var id = Guid.NewGuid().ToString();
 			var fileName = $"{folder}/formula_{id}";
 			// var assemblyName = $"assembly_{id}";
@@ -109,6 +117,7 @@ public sealed class SpecializedFormula : IFormula {{
 				Assembly.GetExecutingAssembly().GetReferencedAssemblies()
 					.Select(a => Assembly.Load(a).Location)
 					.Concat(new []{Assembly.GetExecutingAssembly().Location})
+					.Concat(additionalAssemblies)
 					.ToArray(), //AppDomain.CurrentDomain.GetAssemblies().Select(a => a.Location).ToArray(),
 				fileName
 			);

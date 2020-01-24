@@ -7,6 +7,8 @@ using Formulas;
 using NUnit.Framework;
 
 abstract class IFormulaTest {
+	static IFormulaProvider<Number, Vector3, Quaternion> provider = new FormulaProvider();
+
 	//Operations
 	[TestCase(3, 1, 2, ExpectedResult=9)] public object Op_Grouping(int a, int b, int c) => TimeSolve(TimeBuild($"{a} * ({b} + {c})"));
 	[TestCase(1, 2, ExpectedResult=1)] public object Op_Magnitude(int a, int b) => TimeSolve(TimeBuild($"|{a} - {b}|"));
@@ -33,29 +35,38 @@ abstract class IFormulaTest {
 	[TestCase(1, 2, ExpectedResult=3)] public object Mapped_Multiple_PostInput(int a, int b) => TimeSolve(TimeBuild("f(x, y) = x + y"), a, b);
 
 	//Functions
-	[TestCase(1)] public void Sin(float v) => Assert.AreEqual(Formulizer.Provider.Sin(v), TimeSolve(TimeBuild($"sin({v})")));
-	[TestCase(1)] public void Asin(float v) => Assert.AreEqual(Formulizer.Provider.Asin(v), TimeSolve(TimeBuild($"asin({v})")));
-	[TestCase(1)] public void Cos(float v) => Assert.AreEqual(Formulizer.Provider.Cos(v), TimeSolve(TimeBuild($"cos({v})")));
-	[TestCase(1)] public void Acos(float v) => Assert.AreEqual(Formulizer.Provider.Acos(v), TimeSolve(TimeBuild($"acos({v})")));
-	[TestCase(1)] public void Tan(float v) => Assert.AreEqual(Formulizer.Provider.Tan(v), TimeSolve(TimeBuild($"tan({v})")));
-	[TestCase(1)] public void Atan(float v) => Assert.AreEqual(Formulizer.Provider.Atan(v), TimeSolve(TimeBuild($"atan({v})")));
-	[TestCase(16)] public void Sqrt(float v) => Assert.AreEqual(Formulizer.Provider.Sqrt(v), TimeSolve(TimeBuild($"sqrt({v})")));
-	[TestCase(2)] public void Ln(float v) => Assert.AreEqual(Formulizer.Provider.Ln(v), TimeSolve(TimeBuild($"ln({v})")));
-	[TestCase(2)] public void Log(float v) => Assert.AreEqual(Formulizer.Provider.Log(v), TimeSolve(TimeBuild($"log({v})")));
-	[TestCase(1)] public void Sgn(float v) => Assert.AreEqual(Formulizer.Provider.Sgn(v), TimeSolve(TimeBuild($"sgn({v})")));
-	[TestCase(1)] public void Rvs(float v) => Assert.AreEqual(Formulizer.Provider.Rvs(v), TimeSolve(TimeBuild($"rvs({v})")));
-	[TestCase(1)] public void Lvs(float v) => Assert.AreEqual(Formulizer.Provider.Lvs(v), TimeSolve(TimeBuild($"lvs({v})")));
-	[TestCase(1)] public void Uvs(float v) => Assert.AreEqual(Formulizer.Provider.Uvs(v), TimeSolve(TimeBuild($"uvs({v})")));
-	[TestCase(1)] public void Dvs(float v) => Assert.AreEqual(Formulizer.Provider.Dvs(v), TimeSolve(TimeBuild($"dvs({v})")));
-	[TestCase(1)] public void Fvs(float v) => Assert.AreEqual(Formulizer.Provider.Fvs(v), TimeSolve(TimeBuild($"fvs({v})")));
-	[TestCase(1)] public void Bvs(float v) => Assert.AreEqual(Formulizer.Provider.Bvs(v), TimeSolve(TimeBuild($"bvs({v})")));
-	[TestCase(1)] public void Rnd(float v) => Assert.AreNotEqual(Formulizer.Provider.Rnd(v), TimeSolve(TimeBuild($"rnd({v}")));
-	[TestCase(1)] public void Numeric_Abs(float v) => Assert.AreEqual(Formulizer.Provider.Abs(v), TimeSolve(TimeBuild($"abs({v})")));
-	[TestCase(1)] public void Numeric_Nml(float v) => Assert.AreEqual(Formulizer.Provider.Nml(v), TimeSolve(TimeBuild($"nml({v})")));
-	[TestCase(1, 2, 3)] public void Vector_Abs(float x, float y, float z) => Assert.AreEqual(Formulizer.Provider.Abs(new Vector3(x, y, z)), TimeSolve(TimeBuild("abs(v)"), new Vector3(x, y, z)));
-	[TestCase(1, 2, 3)] public void Vector_Nml(float x, float y, float z) => Assert.AreEqual(Formulizer.Provider.Nml(new Vector3(x, y, z)), TimeSolve(TimeBuild("nml(v)"), new Vector3(x, y, z)));
-	[TestCase(1, 2, 3)] public void Vector_Qtn(float x, float y, float z) => Assert.AreEqual(Formulizer.Provider.Qtn(new Vector3(x, y, z)), TimeSolve(TimeBuild("qtn(v)"), new Vector3(x, y, z)));
-	[TestCase(1, 2, 3)] public void Quaternion_Vec(float x, float y, float z) => Assert.AreEqual(Formulizer.Provider.Vec(Quaternion.CreateFromYawPitchRoll(y, x, z)), TimeSolve(TimeBuild("vec(v)"), Quaternion.CreateFromYawPitchRoll(y, x, z)));
+	[TestCase(1)] public void Sin(float v) => Assert.AreEqual(provider.Sin(v), TimeSolve(TimeBuild($"sin({v})")));
+	[TestCase(1)] public void Asin(float v) => Assert.AreEqual(provider.Asin(v), TimeSolve(TimeBuild($"asin({v})")));
+	[TestCase(1)] public void Cos(float v) => Assert.AreEqual(provider.Cos(v), TimeSolve(TimeBuild($"cos({v})")));
+	[TestCase(1)] public void Acos(float v) => Assert.AreEqual(provider.Acos(v), TimeSolve(TimeBuild($"acos({v})")));
+	[TestCase(1)] public void Tan(float v) => Assert.AreEqual(provider.Tan(v), TimeSolve(TimeBuild($"tan({v})")));
+	[TestCase(1)] public void Atan(float v) => Assert.AreEqual(provider.Atan(v), TimeSolve(TimeBuild($"atan({v})")));
+	[TestCase(16)] public void Sqrt(float v) => Assert.AreEqual(provider.Sqrt(v), TimeSolve(TimeBuild($"sqrt({v})")));
+	[TestCase(2)] public void Ln(float v) => Assert.AreEqual(provider.Ln(v), TimeSolve(TimeBuild($"ln({v})")));
+	[TestCase(2)] public void Log(float v) => Assert.AreEqual(provider.Log(v), TimeSolve(TimeBuild($"log({v})")));
+	[TestCase(1)] public void Sgn(float v) => Assert.AreEqual(provider.Sgn(v), TimeSolve(TimeBuild($"sgn({v})")));
+	[TestCase(1)] public void Rvs(float v) => Assert.AreEqual(provider.Rvs(v), TimeSolve(TimeBuild($"rvs({v})")));
+	[TestCase(1)] public void Lvs(float v) => Assert.AreEqual(provider.Lvs(v), TimeSolve(TimeBuild($"lvs({v})")));
+	[TestCase(1)] public void Uvs(float v) => Assert.AreEqual(provider.Uvs(v), TimeSolve(TimeBuild($"uvs({v})")));
+	[TestCase(1)] public void Dvs(float v) => Assert.AreEqual(provider.Dvs(v), TimeSolve(TimeBuild($"dvs({v})")));
+	[TestCase(1)] public void Fvs(float v) => Assert.AreEqual(provider.Fvs(v), TimeSolve(TimeBuild($"fvs({v})")));
+	[TestCase(1)] public void Bvs(float v) => Assert.AreEqual(provider.Bvs(v), TimeSolve(TimeBuild($"bvs({v})")));
+	[TestCase(1)] public void Rnd(float v) {
+		for(var i = 0; i < 100; i++)
+			if((object)provider.Rnd(v) != TimeSolve(TimeBuild($"rnd({v}")))
+				return;
+
+		Assert.Fail("Provider RND not random");
+	}
+	[TestCase(1)] public void Numeric_Abs(float v) => Assert.AreEqual(provider.Abs(v), TimeSolve(TimeBuild($"abs({v})")));
+	[TestCase(1)] public void Numeric_Nml(float v) => Assert.AreEqual(provider.Nml(v), TimeSolve(TimeBuild($"nml({v})")));
+	[TestCase(1, 2, 3)] public void Vector_Abs(float x, float y, float z) => Assert.AreEqual(provider.Abs(new Vector3(x, y, z)), TimeSolve(TimeBuild("abs(v)"), new Vector3(x, y, z)));
+	[TestCase(1, 2, 3)] public void Vector_Nml(float x, float y, float z) => Assert.AreEqual(provider.Nml(new Vector3(x, y, z)), TimeSolve(TimeBuild("nml(v)"), new Vector3(x, y, z)));
+	[TestCase(1, 2, 3)] public void Vector_Qtn(float x, float y, float z) => Assert.AreEqual(provider.Qtn(new Vector3(x, y, z)), TimeSolve(TimeBuild("qtn(v)"), new Vector3(x, y, z)));
+	[TestCase(1, 2, 3)] public void Quaternion_Vec(float x, float y, float z) => Assert.AreEqual(provider.Vec(Quaternion.CreateFromYawPitchRoll(y, x, z)), TimeSolve(TimeBuild("vec(v)"), Quaternion.CreateFromYawPitchRoll(y, x, z)));
+	[TestCase(1, 2, 3)] public void Quaternion_Abs(float x, float y, float z) => Assert.AreEqual(provider.Abs(Quaternion.CreateFromYawPitchRoll(y, x, z)), TimeSolve(TimeBuild("abs(v)"), Quaternion.CreateFromYawPitchRoll(y, x, z)));
+	[TestCase(1, 2, 3)] public void Quaternion_Nml(float x, float y, float z) => Assert.AreEqual(provider.Nml(Quaternion.CreateFromYawPitchRoll(y, x, z)), TimeSolve(TimeBuild("nml(v)"), Quaternion.CreateFromYawPitchRoll(y, x, z)));
+	[TestCase(1, 2, 3)] public void Quaternion_Inq(float x, float y, float z) => Assert.AreEqual(provider.Inq(Quaternion.CreateFromYawPitchRoll(y, x, z)), TimeSolve(TimeBuild("inq(v)"), Quaternion.CreateFromYawPitchRoll(y, x, z)));
 
 	//Stress
 	[Test] public void Stress1() => Approximately(542, TimeSolve(TimeBuild("(4 * 3|2 + 7|5 + 3 / (2 + 4)^5 + 2)")));
