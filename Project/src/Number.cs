@@ -1,4 +1,5 @@
 #pragma warning disable 1591
+
 using System;
 
 namespace Formulas {
@@ -36,7 +37,7 @@ namespace Formulas {
 		public static implicit operator double(Number number) => number.value;
 
 		//From object
-		public static bool TryParse(object value, out Number number) {
+		public static bool From(object value, out Number number) {
 			switch(value) {
 				case sbyte v: number.value = v; return true;
 				case byte v: number.value = v; return true;
@@ -50,8 +51,18 @@ namespace Formulas {
 				case decimal v: number.value = (float)v; return true;
 				case double v: number.value = (float)v; return true;
 				case Number v: number.value = v; return true;
-				default: number = double.NaN; return false;
+				default: number = float.NaN; return false;
 			}
+		}
+
+		public static bool TryParse(string value, out Number number) {
+			if(float.TryParse(value, out var result)) {
+				number = result;
+				return true;
+			}
+
+			number = float.NaN;
+			return false;
 		}
 
 		//Operators

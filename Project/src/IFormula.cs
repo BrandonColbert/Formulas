@@ -1,5 +1,3 @@
-using System;
-
 namespace Formulas {
 	/// <summary>Describes a way to convert input values into an output value.</summary>
 	public interface IFormula {

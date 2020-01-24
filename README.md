@@ -41,7 +41,7 @@ new Formula("f(x, y, z) = z(x/y + z^2)", 0.5).Solve(20, 4);
 	-  - Subtraction/negation 4
 # Callable Functions
 - sin, asin, cos, acos, tan, atan, sqrt, ln, log, sgn (sign), abs, rnd
-- qtn (vector to quaternion), vec (quaternion to vector), nml (normalize)
+- qtn (vector to quaternion), vec (quaternion to vector), nml (normalize), inq (inverse quaternion)
 - [x]vs (scale Vector3.[x]) where x is r(ight), l(eft), u(p), d(own), f(orward), b(ack)
 # Rules
 - Symbols are case-sensitive

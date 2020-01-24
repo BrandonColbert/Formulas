@@ -3,10 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace Formulas
-{
+namespace Formulas {
 	/// <summary>Standard implementation for creating a formula</summary>
-	public sealed class Formula : IFormula {
+	/// <typeparam name="Provider">IFormulaProvider implementation to specify operations</typeparam>
+	/// <typeparam name="Number">Numeric type</typeparam>
+	/// <typeparam name="Vector">Vector type</typeparam>
+	/// <typeparam name="Quaternion">Quaternion type</typeparam>
+	public sealed class Formula<Provider, Number, Vector, Quaternion> : IFormula where Provider : IFormulaProvider<Number, Vector, Quaternion>, new() {
+		/// <summary>Provides operations for the formula</summary>
+		public static IFormulaProvider<Number, Vector, Quaternion> provider { get; } = new Provider();
+
 		/// <summary>The original string provided as the formula</summary>
 		public string description { get; private set; }
 
@@ -24,7 +30,7 @@ namespace Formulas
 
 		/// <param name="other">Formula to copy</param>
 		/// <param name="input">Initial inputs to use instead</param>
-		public Formula(Formula other, params object[] input) {
+		public Formula(Formula<Provider, Number, Vector, Quaternion> other, params object[] input) {
 			//Copy the formula
 			description = other.description;
 			//Copy the required components
@@ -46,7 +52,7 @@ namespace Formulas
 		/// <param name="input">Initial inputs to use</param>
 		public Formula(string description, params object[] input) {
 			this.description = description;
-			(symbols, order, mapping, initialInputCount) = Formulizer.Build(description, input);
+			(symbols, order, mapping, initialInputCount) = provider.Build(description, input);
 		}
 
 		/// <param name="input">Inputs for the function</param>
@@ -54,137 +60,102 @@ namespace Formulas
 		public object Solve(params object[] input) {
 			//Check if too few inputs supplied
 			if(mapping.Count > initialInputCount + input.Length)
-				throw new FormulaException("Expected " + mapping.Count + " inputs, received " + (initialInputCount + input.Length));
+				throw new FormulaException($"Expected {mapping.Count} inputs, received {initialInputCount + input.Length}");
 
 			var solutionMapping = new Dictionary<char, object>();
 
 			//Pull initial input values
-			for(var i = 0; i < initialInputCount; i++) {
+			for(var i = initialInputCount - 1; i >= 0; i--) {
 				var e = mapping[i];
 				solutionMapping[e.Key] = e.Value;
 			}
 
 			//Pull provided input values
-			for(var i = 0; i < mapping.Count - initialInputCount; i++)
+			for(var i = mapping.Count - initialInputCount - 1; i >= 0; i--)
 				solutionMapping[mapping[initialInputCount + i].Key] = input[i];
 
 			//Create the symbol list
-			var symbols = this.symbols.Select(symbol => {
+			var symbols = new object[this.symbols.Length];
+			
+			for(var i = this.symbols.Length - 1; i >= 0; i--) {
+				var symbol = this.symbols[i];
+
 				switch(symbol) {
-					case StringSymbol v: return v.value; //Function or member/indexer access
+					case StringSymbol v: //Function or member/indexer access
+						symbols[i] = v.value; 
+						break;
 					case CharSymbol v:
 						if(char.IsLetter(v.value)) { //Variable value
 							symbol = solutionMapping[v.value];
 							goto default;
 						} else //Operator
-							return v.value;
-					default: return Number.TryParse(symbol, out var n) ? n : symbol;
+							symbols[i] = v.value;
+						break;
+					default:
+						symbols[i] = provider.ToNumber(symbol, out var n) ? n : symbol;
+						break;
 				}
-			}).ToArray();
-
-			//If there is only one symbol, return its value
-			if(symbols.Length == 1)
-				return symbols[0];
+			}
 
 			//Iteratively reduce the symbol count with the result operations in the calculated order
 			foreach(var index in order) {
 				try {
 					//Calculate the operation between the left and right sides then store in symbols
-					var op = (char)symbols[index];
-					dynamic lhs = symbols[index - 1], rhs = symbols[index + 1];
+					var lhs = symbols[index - 1];
+					var rhs = symbols[index + 1];
 					object result;
 
 					//Calculate the operation between them
-					switch(op) {
-						case '^': result = Math.Pow(lhs, rhs); break;
-						case '*': result = lhs * rhs; break;
-						case '/': result = lhs / rhs; break;
-						case '%': result = lhs % rhs; break;
-						case '+': result = lhs + rhs; break;
-						case '-': result = lhs - rhs; break;
-						case '@': result = Apply(lhs, rhs); break;
-						case ':': result = lhs[rhs]; break;
+					switch((char)symbols[index]) {
+						case '^': result = provider.Pow((Number)lhs, (Number)rhs); break;
+						case '*': result = (dynamic)lhs * (dynamic)rhs; break;
+						case '/': result = (dynamic)lhs / (dynamic)rhs; break;
+						case '%': result = (dynamic)lhs % (dynamic)rhs; break;
+						case '+': result = (dynamic)lhs + (dynamic)rhs; break;
+						case '-': result = (dynamic)lhs - (dynamic)rhs; break;
+						case '@': result = Apply((string)lhs, (dynamic)rhs); break;
+						case ':': result = ((dynamic)lhs)[(string)rhs]; break;
 						case '.': {
-							Type type = lhs.GetType();
+							var type = lhs.GetType();
 
 							//Get next value from members
-							if(!capacity.Retrieve(type, rhs, out Func<object, object> memberGetter)) {
-								var members = type.GetMember(rhs);
+							if(!capacity.Retrieve(type, (string)rhs, out Func<object, object> getMember)) {
+								var members = type.GetMember((string)rhs);
 
 								//Check if unambiguous valid member exists
 								if(members.Length == 1) {
 									switch(members[0]) {
-										case FieldInfo info: memberGetter = instance => info.GetValue(instance); break;
-										case PropertyInfo info: memberGetter = instance => info.GetValue(instance); break;
-										default: throw new FormulaException("Member '" + members[0].Name + "' for '" + lhs + "' of type '" + type.Name + "' is not a field or property");
+										case FieldInfo info: getMember = info.GetValue; break;
+										case PropertyInfo info: getMember = info.GetValue; break;
+										default: throw new FormulaException($"Member '{members[0].Name}' for '{lhs}' of type '{type.Name}' is not a field or property");
 									}
 
-									capacity.Store(type, rhs, memberGetter);
-								} else if(members.Length == 0)
-									throw new FormulaException("Member '" + rhs + "' for '" + lhs + "' of type '" + type.Name + "' does not exist");
-								else
-									throw new FormulaException("Member '" + rhs + "' for '" + lhs + "' of type '" + type.Name + "' is ambiguous");
+									capacity.Store(type, (string)rhs, getMember);
+								} else
+									throw new FormulaException($"Member '{rhs}' for '{lhs}' of type '{type.Name}' {(members.Length == 0 ? "does not exist" : "is ambiguous")}");
 							}
 
 							//Get the value based through field or property access
-							result = memberGetter(lhs);
+							result = getMember(lhs);
 							break;
 						}
-						default: throw new FormulaException("Operator '" + op + "' not supported");
+						default: throw new FormulaException($"Operator '{symbols[index]}' not supported");
 					}
 
-					symbols[index - 1] = Number.TryParse(result, out var n) ? n : result;
+					symbols[index - 1] = provider.ToNumber(result, out var n) ? n : result;
 
 					//Replace the lhs, op, and rhs with their result in the symbol list
 					Array.Copy(symbols, index + 2, symbols, index, symbols.Length - 2 - index);
 				} catch(System.Exception e) {
-					throw new Formula.Exception(this, solutionMapping, symbols, index, e);
+					throw new Exception(this, solutionMapping, symbols, index, e);
 				}
 			}
 
 			return symbols[0];
 		}
 
-		/// <returns>A string that represents the current object.</returns>
-		public override string ToString() => description;
-
-		/// <summary>Converts a description into a formula</summary>
-		/// <param name="description">The description to create a formula with</param>
-		public static implicit operator Formula(string description) => new Formula(description);
-
-		private static object Apply(string function, Number value) => applyNumber[function](value);
-		private static Dictionary<string, Func<Number, object>> applyNumber = new Dictionary<string, Func<Number, object>>() {
-			["sin"] = v => Formulizer.Provider.Sin(v),
-			["asin"] = v => Formulizer.Provider.Asin(v),
-			["cos"] = v => Formulizer.Provider.Cos(v),
-			["acos"] = v => Formulizer.Provider.Acos(v),
-			["tan"] = v => Formulizer.Provider.Tan(v),
-			["atan"] = v => Formulizer.Provider.Atan(v),
-			["sqrt"] = v => Formulizer.Provider.Sqrt(v),
-			["ln"] = v => Formulizer.Provider.Ln(v),
-			["log"] = v => Formulizer.Provider.Log(v),
-			["sgn"] = v => Formulizer.Provider.Sgn(v),
-			["rvs"] = v => Formulizer.Provider.Rvs(v),
-			["lvs"] = v => Formulizer.Provider.Lvs(v),
-			["uvs"] = v => Formulizer.Provider.Uvs(v),
-			["dvs"] = v => Formulizer.Provider.Dvs(v),
-			["fvs"] = v => Formulizer.Provider.Fvs(v),
-			["bvs"] = v => Formulizer.Provider.Bvs(v),
-			["rnd"] = v => Formulizer.Provider.Rnd(v),
-			["abs"] = v => Formulizer.Provider.Abs(v),
-			["nml"] = v => Formulizer.Provider.Nml(v)
-		};
-
-		private static object Apply(string function, object value) => applyObject[function](value);
-		private static Dictionary<string, Func<object, object>> applyObject = new Dictionary<string, Func<object, object>>() {
-			["abs"] = v => Formulizer.Provider.Abs(v),
-			["nml"] = v => Formulizer.Provider.Nml(v),
-			["qtn"] = v => Formulizer.Provider.Qtn(v),
-			["vec"] = v => Formulizer.Provider.Vec(v)
-		};
-
 		internal class Exception : FormulaException {
-			public Exception(Formula formula, ICollection<KeyValuePair<char, object>> mapping, object[] symbols, int index, System.Exception e) : base(
+			public Exception(Formula<Provider, Number, Vector, Quaternion> formula, ICollection<KeyValuePair<char, object>> mapping, object[] symbols, int index, System.Exception e) : base(
 				string.Join("\n", new[]{
 					$"{e.Message}\n{formula.description}",
 					"Mappings",
@@ -194,5 +165,51 @@ namespace Formulas
 				})
 			, e) {}
 		}
+
+		/// <returns>A string that represents the current object.</returns>
+		public override string ToString() => description;
+
+		/// <summary>Converts a description into a formula</summary>
+		/// <param name="description">The description to create a formula with</param>
+		public static implicit operator Formula<Provider, Number, Vector, Quaternion>(string description) => new Formula<Provider, Number, Vector, Quaternion>(description);
+
+		private object Apply(string name, Number value) => numericFunctions[name](value);
+		private object Apply(string name, Vector value) => vectorFunctions[name](value);
+		private object Apply(string name, Quaternion value) => quaternionFunctions[name](value);
+
+		private static Dictionary<string, Func<Number, object>> numericFunctions = new Dictionary<string, Func<Number, object>>() {
+			["sin"] = v => provider.Sin(v),
+			["asin"] = v => provider.Asin(v),
+			["cos"] = v => provider.Cos(v),
+			["acos"] = v => provider.Acos(v),
+			["tan"] = v => provider.Tan(v),
+			["atan"] = v => provider.Atan(v),
+			["sqrt"] = v => provider.Sqrt(v),
+			["ln"] = v => provider.Ln(v),
+			["log"] = v => provider.Log(v),
+			["sgn"] = v => provider.Sgn(v),
+			["rvs"] = v => provider.Rvs(v),
+			["lvs"] = v => provider.Lvs(v),
+			["uvs"] = v => provider.Uvs(v),
+			["dvs"] = v => provider.Dvs(v),
+			["fvs"] = v => provider.Fvs(v),
+			["bvs"] = v => provider.Bvs(v),
+			["rnd"] = v => provider.Rnd(v),
+			["abs"] = v => provider.Abs(v),
+			["nml"] = v => provider.Nml(v)
+		};
+
+		private static Dictionary<string, Func<Vector, object>> vectorFunctions = new Dictionary<string, Func<Vector, object>>() {
+			["abs"] = v => provider.Abs(v),
+			["nml"] = v => provider.Nml(v),
+			["qtn"] = v => provider.Qtn(v)
+		};
+
+		private static Dictionary<string, Func<Quaternion, object>> quaternionFunctions = new Dictionary<string, Func<Quaternion, object>>() {
+			["abs"] = v => provider.Abs(v),
+			["nml"] = v => provider.Nml(v),
+			["vec"] = v => provider.Vec(v),
+			["inq"] = v => provider.Inq(v)
+		};
 	}
 }
