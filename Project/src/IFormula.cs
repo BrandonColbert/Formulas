@@ -18,7 +18,7 @@ namespace Formulas {
 			if(result is T v)
 				return v;
 
-			throw new FormulaException("Solution '" + result + "' of type " + result?.GetType().ToString() + " could not be converted to " + typeof(T));
+			throw new FormulaSolveException($"Solution '{result}' of type {result?.GetType().ToString() ?? "unknown"} could not be converted to {typeof(T)}");
 		}
 	}
 }
