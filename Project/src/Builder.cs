@@ -4,120 +4,8 @@ using System.Linq;
 using System.Text;
 
 namespace Formulas {
-	/// <summary>Provides standard definitions for all formula functions</summary>
-	/// <typeparam name="Number">Numeric type</typeparam>
-	/// <typeparam name="Vector">Vector type</typeparam>
-	/// <typeparam name="Quaternion">Quaternion type</typeparam>
-	public interface IFormulaProvider<Number, Vector, Quaternion> {
-		/// <summary>Try to convert the object to a number</summary>
-		/// <param name="v">Input object</param>
-		/// <param name="n">Resulting number</param>
-		/// <returns>Whether conversion was possible</returns>
-		bool ToNumber(object v, out Number n);
-
-		/// <summary>Try to parse the string as a number</summary>
-		/// <param name="v">String to parse</param>
-		/// <param name="n">Resulting number</param>
-		/// <returns>Whether parsing was possible</returns>
-		bool TryParse(string v, out Number n);
-
-		/// <summary>Sine</summary>
-		Number Sin(Number v);
-
-		/// <summary>Arcsin</summary>
-		Number Asin(Number v);
-
-		/// <summary>Cosine</summary>
-		Number Cos(Number v);
-
-		/// <summary>Arccos</summary>
-		Number Acos(Number v);
-
-		/// <summary>Tangent</summary>
-		Number Tan(Number v);
-
-		/// <summary>Arctangent</summary>
-		Number Atan(Number v);
-
-		/// <summary>Square root</summary>
-		Number Sqrt(Number v);
-
-		/// <summary>Exponentiation</summary>
-		Number Pow(Number lhs, Number rhs);
-
-		/// <summary>Natural logarithm</summary>
-		Number Ln(Number v);
-
-		/// <summary>Logarithm</summary>
-		Number Log(Number v);
-
-		/// <summary>Sign</summary>
-		Number Sgn(Number v);
-
-		/// <summary>Right vector scale</summary>
-		Vector Rvs(Number v);
-
-		/// <summary>Left vector scale</summary>
-		Vector Lvs(Number v);
-
-		/// <summary>Up vector scale</summary>
-		Vector Uvs(Number v);
-
-		/// <summary>Down vector scale</summary>
-		Vector Dvs(Number v);
-
-		/// <summary>Forward vector scale</summary>
-		Vector Fvs(Number v);
-
-		/// <summary>Back vector scale</summary>
-		Vector Bvs(Number v);
-
-		/// <summary>Random value</summary>
-		Number Rnd(Number v);
-
-		/// <summary>Numeric absolute value</summary>
-		Number Abs(Number v);
-
-		/// <summary>Vector magnitude</summary>
-		Number Abs(Vector v);
-
-		/// <summary>Quaternion magnitude</summary>
-		Number Abs(Quaternion v);
-
-		/// <summary>Normalized number</summary>
-		Number Nml(Number v);
-
-		/// <summary>Normalized vector</summary>
-		Vector Nml(Vector v);
-
-		/// <summary>Normalized quaternion</summary>
-		Quaternion Nml(Quaternion v);
-		
-		/// <summary>Vector from quaternion</summary>
-		Vector Vec(Quaternion v);
-
-		/// <summary>Quaternion from vector</summary>
-		Quaternion Qtn(Vector v);
-
-		/// <summary>Inverse quaternion</summary>
-		Quaternion Inq(Quaternion v);
-	}
-
-	/// <summary>Extensions of the IFormulaProvider interface</summary>
-	public static class IFormulaProviderExtensions {
-		//Cache of all the functions methods
-		private static HashSet<string> functions { get; } = new HashSet<string>() {
-			"sin", "asin", "cos", "acos", "tan", "atan",
-			"pow", "sqrt", "ln", "log", "sgn", "rnd",
-			"abs", "nml",
-			"rvs", "lvs", "uvs", "dvs", "fvs", "bvs",
-			"inq", "qtn", "vec"
-		};
-
-		/// <summary>Builds the required data for a formula using the description and initial inputs</summary>
-		/// <typeparam name="Number">Numeric type</typeparam>
-		/// <typeparam name="Vector">Vector type</typeparam>
-		/// <typeparam name="Quaternion">Quaternion type</typeparam>
+	/// <summary>Builds the required data for a formula using the description and initial inputs</summary>
+	static class Builder {
 		/// <returns>
 		/// A tuple consisting of:
 		/// The values (object), variables (chars/strings), functions (strings), and operations (chars)
@@ -125,7 +13,7 @@ namespace Formulas {
 		/// The mappings for each variable
 		/// Number of initial inputs provided
 		/// </returns>
-		public static (object[], int[], List<KeyValuePair<char, object>>, int) Build<Number, Vector, Quaternion>(this IFormulaProvider<Number, Vector, Quaternion> provider, string description, params object[] input) {
+		public static (object[], int[], List<KeyValuePair<char, object>>, int) Parse(string description, params object[] input) {
 			//Temporary variables for interpreting the formula
 			var symbols = new List<object>(); //Symbols in the formula
 			var groups = new List<(int, int)>(); //Each group's index and range
@@ -143,10 +31,15 @@ namespace Formulas {
 				description = parts[1];
 
 				//Get the variables
-				var variables = parts[0].Take(parts[0].Length - 1) //Get everything within f(...)
-										.Skip(2)
-										.Where(c => char.IsLetter(c)) //Get letters
-										.ToList();
+				var variables = new string(
+						parts[0]
+						.Where(c => !char.IsWhiteSpace(c))
+						.Take(parts[0].Length - 1) //Get everything within f(...)
+						.Skip(2)
+						.ToArray()
+					).Split(',')
+					.Select(s => s[0]) //Get variables
+					.ToList();
 
 				//Map the variables to currently available inputs
 				for(var i = 0; i < variables.Count; i++) {
@@ -194,7 +87,7 @@ namespace Formulas {
 							if(chained)
 								symbols.Add(new CharSymbol('*'));
 
-							provider.TryParse(subvalue.ToString(), out var number);
+							Number.TryParse(subvalue.ToString(), out var number);
 							symbols.Add(number);
 							subvalue.Clear();
 
@@ -248,7 +141,7 @@ namespace Formulas {
 				var c = description[i];
 
 				switch(c) {
-					case '@': throw new FormulaException("Reserved operator @ not allowed"); //Function application (lhs is function and rhs is value)
+					case '@': throw new FormulaParseException("Reserved operator @ not allowed"); //Function application (lhs is function and rhs is value)
 					case '(': { //Group open
 						//Adjacent groups get multiplied
 						if(groups.Count > 0) {
@@ -261,7 +154,7 @@ namespace Formulas {
 						var v = new string(value.ToArray());
 
 						//If a function or value/variable preceded, add the appropriate symbol
-						if(functions.Contains(v)) {
+						if(Features.functionNames.Contains(v)) {
 							symbols.Add(new StringSymbol(v));
 							symbols.Add(new CharSymbol('@'));
 							value.Clear();
@@ -285,7 +178,7 @@ namespace Formulas {
 						var shouldClose = false;
 
 						var v = new string(value.ToArray());
-						if(functions.Contains(v)) {
+						if(Features.functionNames.Contains(v)) {
 							//If a function precedes, add and open
 							symbols.Add(new StringSymbol(v));
 							symbols.Add(new CharSymbol('@'));
@@ -295,7 +188,7 @@ namespace Formulas {
 							if(groupIndices.Count > 0 && groupIndices.Peek().Item2) {
 								switch(symbols.Last()) {
 									case CharSymbol s: shouldClose = char.IsLetterOrDigit(s.value); break;
-									case StringSymbol s: shouldClose = !functions.Contains(s.value); break;
+									case StringSymbol s: shouldClose = !Features.functionNames.Contains(s.value); break;
 									default: shouldClose = true; break;
 								}
 							}
@@ -397,5 +290,34 @@ namespace Formulas {
 
 			return (resultSymbols, resultOrder, mapping, initialInputCount);
 		}
+
+		/// <returns>Types specified by the formula</returns>
+		public static Type[] ParseTypes(string description) {
+			//No types if no specification section
+			if(!description.Contains("="))
+				return new Type[0];
+
+			//Acquire specification section of description
+			var spec = string.Concat(description.Split('=').First().Where(c => !char.IsWhiteSpace(c))); //Get 'f(...)' from 'f(...)=...' without spaces
+
+			//Acquire the type specification for each variable
+			return spec.Substring(2, spec.Length - 3) //Get '...' from 'f(...)'
+				.Split(',') //Split into individual '<variable>: <type>' from '...'
+				.Select(s => { //Get '<type>' from '<variable>: <type>'
+					var index = s.IndexOf(':');
+
+					if(index == -1)
+						throw new FormulaParseException($"Type not found for variable '{s}'");
+
+					return Features.FindType(s.Substring(index + 1));
+				})
+				.ToArray();
+		}
+
+		/// <summary>Checks the validity of a formula</summary>
+		/// <param name="description">Formula description</param>
+		/// <param name="evaluation">Problems with the formula if invalid, empty otherwise</param>
+		/// <returns>Whether the formula description is valid</returns>
+		public static bool CheckValidity(string description, out string evaluation) => throw new System.NotImplementedException();
 	}
 }

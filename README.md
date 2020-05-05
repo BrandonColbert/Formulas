@@ -1,6 +1,6 @@
 # Formulas
 A Formula describes a way to convert multiple inputs into an output.
-They allow for minimal context switching between the scripting and engine language.
+They allow for minimal context switching between a host program and its scripting language.
 ## Example
 ```C#
             Input Mapping           Initial Input
@@ -23,7 +23,6 @@ new Formula("f(x, y, z) = z(x/y + z^2)", 0.5).Solve(20, 4);
 - Always mapped before "Input".
 ## Input
 - Any amount of inputs to be mapped to variables.
-
 # General
 - Notation is 'f(v1,v2,...,vn)=t' where vn is the nth value input and t is the expected return type.
 - Values and inputs used must also support the operators used on them.
@@ -34,15 +33,14 @@ new Formula("f(x, y, z) = z(x/y + z^2)", 0.5).Solve(20, 4);
 	() - Grouping 2
 	|| - Magnitude grouping 2
 	^  - Exponentiation 3
-	*  - Multiplication 3
-	/  - Division 3
-	%  - Modulus 3
-	+  - Addition 4
-	-  - Subtraction/negation 4
-# Callable Functions
-- sin, asin, cos, acos, tan, atan, sqrt, ln, log, sgn (sign), abs, rnd
-- qtn (vector to quaternion), vec (quaternion to vector), nml (normalize), inq (inverse quaternion)
-- [x]vs (scale Vector3.[x]) where x is r(ight), l(eft), u(p), d(own), f(orward), b(ack)
+	*  - Multiplication 4
+	/  - Division 4
+	%  - Modulus 4
+	+  - Addition 5
+	-  - Subtraction/negation 5
+# Customization
+- Unary functions can registered in Features to make them callable from any formula.
+- Usable types can be specified in Features to enable compilation when present in a formula.
 # Rules
 - Symbols are case-sensitive
 - Whitespace is ignored
