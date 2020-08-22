@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace Formulas {
 	/// <summary>Represents a variable, property, or function within the tree</summary>
 	abstract class TextNode : Node {

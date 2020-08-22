@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -12,7 +11,7 @@ namespace Formulas {
 	class OpNode : Node {
 		public readonly Operation value;
 		public OpNode(Operation op) => value = op;
-		public override string DisplayString() => $"{value.ToString()}{base.DisplayString()}";
+		public override string ToDisplayString() => $"(operation {value}){base.ToDisplayString()}";
 
 		public override bool Reduce(out Node node) {
 			NumberNode left = null, right = null;
@@ -60,9 +59,9 @@ namespace Formulas {
 			}
 		}
 
-		public override bool Calculate(Specification spec, Dictionary<string, object> inputs, out object result) {
+		public override bool Calculate(Description desc, Dictionary<string, object> inputs, out object result) {
 			object ValueOf(Node node) {
-				if(!node.Calculate(spec, inputs, out var r))
+				if(!node.Calculate(desc, inputs, out var r))
 					throw new SolveException($"Unable to calculate '{node}' in '{this}'");
 
 				return r;
@@ -146,7 +145,7 @@ namespace Formulas {
 							result = info.GetValue(left);
 							break;
 						default:
-							throw new SolveException($"Member '{members[0].Name}' of type '{type.Name}' specified by '{Left}' is not a field or property");
+							throw new SolveException($"Member '{members[0].Name}' of type '{type.Name}' descified by '{Left}' is not a field or property");
 					}
 
 					if(Number.From(result, out var n))
@@ -159,13 +158,13 @@ namespace Formulas {
 			}
 		}
 
-		public override Expression Compile(Specification spec, ParameterExpression args) {
+		public override Expression Compile(Description desc, ParameterExpression args) {
 			switch(value) {
 				case Operation.Negate:
-					return Expression.Negate(Right.Compile(spec, args));
+					return Expression.Negate(Right.Compile(desc, args));
 				case Operation.Power: {
-					var left = Left.Compile(spec, args);
-					var right = Right.Compile(spec, args);
+					var left = Left.Compile(desc, args);
+					var right = Right.Compile(desc, args);
 
 					if(left.Type != typeof(double))
 						left = Expression.Convert(left, typeof(double));
@@ -177,7 +176,7 @@ namespace Formulas {
 						typeof(Number)
 					);
 				} case Operation.Property: {
-					var instance = Left.Compile(spec, args);
+					var instance = Left.Compile(desc, args);
 
 					if(!(Right is NameNode rightNameNode))
 						throw new CompileException($"Property must be a name, but '{Right}' was supplied for '{this}'");
@@ -196,13 +195,13 @@ namespace Formulas {
 					}
 				}
 				case Operation.Index: {
-					var instance = Left.Compile(spec, args);
+					var instance = Left.Compile(desc, args);
 
 					if(instance.Type.IsArray) {
 						if(!(Right is NumberNode))
 							throw new CompileException($"Arrays can only be indexed with numbers, but '{Right}' was supplied for '{this}'");
 
-						var index = Right.Compile(spec, args);
+						var index = Right.Compile(desc, args);
 						if(index.Type != typeof(int))
 							index = Expression.Convert(index, typeof(int));
 
@@ -239,13 +238,13 @@ namespace Formulas {
 								}
 							);
 
-							var parameter = Right.Compile(spec, args);
+							var parameter = Right.Compile(desc, args);
 							return Expression.Dynamic(indexer, typeof(object), instance, parameter);
 						}
 						case 1: {
 							var indexer = indexers.First();
 
-							var parameter = Right.Compile(spec, args);
+							var parameter = Right.Compile(desc, args);
 							var parameterType = indexer.GetIndexParameters().First().ParameterType;
 							if(parameter.Type != parameterType)
 								parameter = Expression.Convert(parameter, parameterType);
@@ -264,7 +263,7 @@ namespace Formulas {
 					if(!(Left is NameNode leftNameNode))
 						throw new CompileException($"Property must be a name, but '{Left}' was supplied for '{this}'");
 
-					var parameter = Right.Compile(spec, args);
+					var parameter = Right.Compile(desc, args);
 					var (target, method) = Features.MatchFunction(leftNameNode.value.ToLower(), parameter.Type);
 
 					var parameterType = method.GetParameters().First().ParameterType;
@@ -300,8 +299,8 @@ namespace Formulas {
 							throw new CompileException($"Operator '{value}' in '{this}' does not support compilation");
 					}
 
-					var left = Left.Compile(spec, args);
-					var right = Right.Compile(spec, args);
+					var left = Left.Compile(desc, args);
+					var right = Right.Compile(desc, args);
 
 					if(Number.Is(left.Type) && left.Type != typeof(Number))
 						left = Expression.Convert(left, typeof(Number));
