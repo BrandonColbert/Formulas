@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net47</TargetFramework>
     <AssemblyName>Formulas</AssemblyName>
-	<VersionPrefix>0.1.6</VersionPrefix>
+	<VersionPrefix>0.1.7</VersionPrefix>
 	<GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 

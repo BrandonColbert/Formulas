@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using Formulas;
 using NUnit.Framework;
@@ -15,7 +16,8 @@ class Setup {
 		Features.EnableType(typeof(Number), "number", "num");
 		Features.EnableType(typeof(Vector3), "vector3", "vec3");
 		Features.EnableType(typeof(Quaternion), "quaternion", "quat");
-		Features.EnableType(typeof(System.Collections.IDictionary), "dictionary", "map");
+		Features.EnableType(typeof(Dictionary<string, object>), "dictionary", "map");
+		Features.EnableType(typeof(object[]), "array", "arr");
 
 		var rand = new Random();
 		Features.AddFunction("abs", new Func<Vector3, Number>(v => v.Length()));
