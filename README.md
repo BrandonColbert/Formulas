@@ -1,55 +1,61 @@
 # Formulas
 A Formula describes a way to convert multiple inputs into an output.
-They allow for minimal context switching between a host program and its scripting language.
+
+The intended use case is to minimize context switching between a host program and its scripting language when computing numeric values.
 ## Example
 ```C#
-            Input Mapping           Initial Input
-                   |                      |
-             ------------                ---
-            |            |              |   |
-new Formula("f(x, y, z) = z(x/y + z^2)", 0.5).Solve(20, 4);
-                         |            |            |     |
-                          ------------              -----
-                               |                      |
-                           Operations               Input
+           Specification
+                 |
+             ----------
+            |          |
+new Formula("f(x, y, z) = 3(x/y + z^2)").Solve(8, 2, 4);
+                         |            |       |       |
+                          ------------         -------
+                               |                  |
+                           Description           Input
 ```
-## Input Mapping (optional)
-- Specifies what variables to assign each value in the order that input is received.
-- Defaults to the order in which each variable first appears in "Operations".
-## Operations
-- What operations to execute on the variables and values to acquire a solution.
-## Initial Input (optional)
-- Any amount of inputs to be mapped to variables in the given order every time a solution is calculated.
-- Always mapped before "Input".
+## Specification (Optional)
+- Indicates what variables to assign each value in the order that input is received.
+- If excluded, the variables are inferred in the order of their first appearance in the description.
+## Description
+- How to operate on the variables and values to acquire a solution.
 ## Input
-- Any amount of inputs to be mapped to variables.
+- Any amount of inputs to be mapped to their corresponding variables based on their order.
 # General
 - Notation is 'f(v1,v2,...,vn)=t' where vn is the nth value input and t is the expected return type.
 - Values and inputs used must also support the operators used on them.
 - Math functions involving angles use radians.
-# Operations (precedence)
-	.  - Member access 1
-	:  - Indexer access 1
-	() - Grouping 2
-	|| - Magnitude grouping 2
-	^  - Exponentiation 3
-	*  - Multiplication 4
-	/  - Division 4
-	%  - Modulus 4
-	+  - Addition 5
-	-  - Subtraction/negation 5
+# Operators
+	.	Member Access
+	:	Indexer
+	()	Grouping
+	||	Magnitude
+	^ 	Exponentiation
+	* 	Multiplication
+	/ 	Division
+	% 	Modulus
+	+ 	Addition
+	- 	Subtraction/Negation
+
+## Precedence (Highest First)
+| Symbol | Type | Associativity |
+|---|---|---|
+|`. :`| Binary | -> |
+|`-`| Unary | <- |
+|`( ) |`| Grouping | -> |
+|`^`|  Binary | -> |
+|`* / %`| Binary | -> |
+|`+ -`| Binary | -> |
+
 # Customization
-- Unary functions can registered in Features to make them callable from any formula.
-- Usable types can be specified in Features to enable compilation when present in a formula.
+- Transform functions can registered in Features to be called from any Formula.
+- Usable types can be added in Features to enable compilation when present in a formula.
+- By default, type deduction is used determine types from their specified name when not found in Features.
 # Rules
-- Symbols are case-sensitive
-- Whitespace is ignored
-- Any '-' preceding a variable without a left-hand side value/variable incurs negation
-- Adjacent values, variables, or non-magnitude groups incur multiplication
-- Values/variables preceding '(' and proceding ')' incur multiplication with the group's result
-- Functions preceding '(' incur function application to the group's result
-- Functions must not be directly preceeded by variables, values, or other functions
-- Operator '|' can be applied to the same rules as '(' or ')'
-- Unlike operators '(' and ')', operator '|' groups as soon as possible
-- A '.' proceeded by a digit is a number. If proceeded by a letter, a member reference.
-- All indexer acceses convert the proceeding symbol to a string
+- Variables are case-sensitive.
+- Whitespace is ignored.
+- Any `-` preceding a variable without a left-hand side value/variable incurs negation.
+- Adjacent non-operators (excluding `(`, `)`, and `|`) incur multiplication.
+- Names preceding `(` or `|` incur function application to the group's result.
+- Functions must not be directly preceeded by text.
+- When `.` is proceeded by a digit, it serves as a decimal point. If proceeded by a letter, a member access.

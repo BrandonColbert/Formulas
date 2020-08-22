@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 
@@ -7,33 +8,36 @@ namespace Formulas {
 	/// <summary>Allows functions to be added and types to be enabled for formulas</summary>
 	public static class Features {
 		/// <summary>Whether formula type specification should be deduced from any types in the loaded assemblies</summary>
-		public static bool deduceTypeFromAssemblies = true;
-		internal static Func<Number, Number, Number> pow = (l, r) => Math.Pow(l, r);
-		internal static readonly HashSet<string> functionNames = new HashSet<string>();
+		public static bool typeDeduction = true;
+
 		private static Dictionary<string, List<(object, MethodInfo)>> functions = new Dictionary<string, List<(object, MethodInfo)>>();
 		private static Dictionary<string, Type> typemap = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
 		private const string OpImplicit = "op_Implicit";
 
-		static Features() => Features.AddFunction("abs", new Func<Number, Number>(v => Math.Abs(v)));
+		static Features() => Features.AddFunction(MagnitudeNode.TransformName, new Func<Number, Number>(v => Math.Abs(v)));
 
 		/// <param name="name">Typename</param>
-		/// <returns>Type for the given typename</returns>
-		public static Type FindType(string name) {
-			if(typemap.TryGetValue(name, out var type))
-				return type;
-			else if(deduceTypeFromAssemblies) {
-				var types = AppDomain.CurrentDomain.GetAssemblies().SelectMany(d => d.GetTypes());
+		/// <param name="type">Type for the given typename</param>
+		/// <returns>Whether a matching type was found</returns>
+		public static bool FindType(string name, out Type type) {
+			if(typemap.TryGetValue(name, out type))
+				return true;
 
-				var matches = (name.Contains(".") ? types.Where(t => t.FullName.ToLower() == name.ToLower()) : types.Where(t => t.Name.ToLower() == name.ToLower())).ToArray();
+			if(typeDeduction) {
+				var fullName = name.Contains(".");
+				var matches = AppDomain
+					.CurrentDomain
+					.GetAssemblies()
+					.SelectMany(d => d.GetTypes())
+					.Where(t => Parser.GetTypename(t, fullName) == name);
 
-				if(matches.Length == 0)
-					throw new Exception($"Type not found for variable '{name}'");
-				else if(matches.Length > 1)
-					throw new Exception($"Type for variable '{name}' ambiguous between {string.Join(", ", matches.Select(t => t.FullName))}");
+				if(matches.Count() == 1) {
+					type = matches.First();
+					return true;
+				}
+			}
 
-				return matches[0];
-			} else
-				return null;
+			return false;
 		}
 
 		/// <summary>Enable a type to be explicity used in formulas</summary>
@@ -56,10 +60,8 @@ namespace Formulas {
 		public static void AddFunction<T, TResult>(string name, Func<T, TResult> function) {
 			name = name.ToLower();
 
-			if(!functions.TryGetValue(name, out var v)) {
-				functionNames.Add(name);
+			if(!functions.TryGetValue(name, out var v))
 				functions[name] = v = new List<(object, MethodInfo)>();
-			}
 
 			v.Add((function.Target, function.Method));
 		}
@@ -68,7 +70,6 @@ namespace Formulas {
 		/// <param name="name">Name of the function</param>
 		public static void RemoveFunctions(string name) {
 			name = name.ToLower();
-			functionNames.Remove(name);
 			functions.Remove(name);
 		}
 
@@ -125,6 +126,22 @@ namespace Formulas {
 				return (result, rhs);
 
 			return (null, null);
+		}
+
+		/// <summary>The type who is calling a function is this library</summary>
+		/// <remarks>Used to provide context dynamic compilation binding</remarks>
+		internal static Type GetContext() {
+			var depth = 0;
+			var context = typeof(object);
+			var assembly = Assembly.GetExecutingAssembly();
+
+			//Backtrack through callers to leave this assembly
+			do {
+				var frame = new StackFrame(depth++, false);
+				context = frame.GetMethod().DeclaringType;
+			} while(context.Assembly == assembly);
+
+			return context;
 		}
 	}
 }
