@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -71,18 +70,18 @@ namespace Formulas {
 		}
 
 		/// <returns>Neatly formatted multiline string representing the tree for this node</returns>
-		public virtual string DisplayString() {
+		public virtual string ToDisplayString() {
 			var builder = new StringBuilder();
 
 			if(Left || Right) {
 				if(Left)
-					builder.Append($"\n{string.Join("\n", Left.DisplayString().Split('\n').Select(v => $"\t{v}"))}");
+					builder.Append($"\n{string.Join("\n", Left.ToDisplayString().Split('\n').Select(v => $"\t{v}"))}");
 
 				if(Right) {
 					if(!Left)
 						builder.AppendLine();
 
-					builder.Append($"\n{string.Join("\n", Right.DisplayString().Split('\n').Select(v => $"\t{v}"))}");
+					builder.Append($"\n{string.Join("\n", Right.ToDisplayString().Split('\n').Select(v => $"\t{v}"))}");
 				}
 			}
 
@@ -113,20 +112,20 @@ namespace Formulas {
 			return false;
 		}
 
-		/// <param name="spec">Formula specification</param>
+		/// <param name="desc">Formula description</param>
 		/// <param name="inputs">Map of variables to their values</param>
 		/// <param name="result">Calculated value result of the node</param>
 		/// <returns>Whether a calculation was done</returns>
-		public virtual bool Calculate(Specification spec, Dictionary<string, object> inputs, out object result) {
+		public virtual bool Calculate(Description desc, Dictionary<string, object> inputs, out object result) {
 			result = null;
 			return false;
 		}
 
 		/// <summary>Converts this node into an expression</summary>
-		/// <param name="spec">Formula specification</param>
+		/// <param name="desc">Formula description</param>
 		/// <param name="args">Formula arguments</param>
 		/// <returns>Expression that this node represents</returns>
-		public virtual Expression Compile(Specification spec, ParameterExpression args) => throw new CompileException($"Compilation is not supported on '{ToString()}'");
+		public virtual Expression Compile(Description desc, ParameterExpression args) => throw new CompileException($"Compilation is not supported on '{ToString()}'");
 
 		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 

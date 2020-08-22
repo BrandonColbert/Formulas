@@ -5,7 +5,7 @@ namespace Formulas {
 
 		public MagnitudeNode(string value) : base(value) {}
 		public override string ToString() => $"|{value}|";
-		public override string DisplayString() => $"{ToString()}{base.DisplayString()}";
+		public override string ToDisplayString() => $"(magnitude {value}){base.ToDisplayString()}";
 
 		public override bool Reduce(out Node node) {
 			if(!base.Reduce(out var group)) {

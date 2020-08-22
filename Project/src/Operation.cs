@@ -16,7 +16,7 @@ namespace Formulas {
 	}
 
 	/// <summary>Operators for operations in a formula</summary>
-	static class Ops {
+	static class Op {
 		public const char
 			Add = '+', //Add
 			Sub = '-', //Subtract

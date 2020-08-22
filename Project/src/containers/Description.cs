@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Formulas {
 	/// <summary>Specifies formula qualities</summary>
-	public class Specification {
+	public class Description {
 		/// <summary>Name of the formula</summary>
 		public readonly string name;
 
@@ -15,12 +15,12 @@ namespace Formulas {
 		public readonly Dictionary<string, Type> types;
 
 		/// <param name="name">Formula name</param>
-		public Specification(string name) : this(name, new List<string>(), new Dictionary<string, Type>()) {}
+		public Description(string name) : this(name, new List<string>(), new Dictionary<string, Type>()) {}
 
 		/// <param name="name">Formula name</param>
 		/// <param name="variables">Formula variables</param>
 		/// <param name="types">Formula variable types</param>
-		public Specification(string name, List<string> variables, Dictionary<string, Type> types) {
+		public Description(string name, List<string> variables, Dictionary<string, Type> types) {
 			this.name = name;
 			this.variables = variables;
 			this.types = types;

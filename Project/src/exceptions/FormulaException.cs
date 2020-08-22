@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 
 namespace Formulas {
 	/// <summary>Error when some stage of a formula fails</summary>

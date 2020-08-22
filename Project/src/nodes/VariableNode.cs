@@ -9,9 +9,9 @@ namespace Formulas {
 	/// </summary>
 	class VariableNode : TextNode {
 		public VariableNode(string text) : base(text) {}
-		public override string DisplayString() => $"{ToString()} (variable){base.DisplayString()}";
+		public override string ToDisplayString() => $"(variable {value}){base.ToDisplayString()}";
 
-		public override bool Calculate(Specification spec, Dictionary<string, object> inputs, out object result) {
+		public override bool Calculate(Description desc, Dictionary<string, object> inputs, out object result) {
 			if(inputs.TryGetValue(value, out result)) {
 				if(Number.From(result, out var number))
 					result = number;
@@ -22,14 +22,14 @@ namespace Formulas {
 			return false;
 		}
 
-		public override Expression Compile(Specification spec, ParameterExpression args) {
-			var index = spec.variables.IndexOf(value);
+		public override Expression Compile(Description desc, ParameterExpression args) {
+			var index = desc.variables.IndexOf(value);
 
 			if(index == -1)
 				throw new CompileException($"Unknown variable '{this}'");
 
-			if(!spec.types.TryGetValue(value, out var type))
-				throw new CompileException($"Type not specified for variable '{this}'");
+			if(!desc.types.TryGetValue(value, out var type))
+				throw new CompileException($"Type not descified for variable '{this}'");
 
 			Expression body = Expression.ArrayIndex(args, Expression.Constant(index));
 

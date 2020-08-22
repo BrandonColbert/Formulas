@@ -7,7 +7,7 @@ using System.Reflection;
 namespace Formulas {
 	/// <summary>Allows functions to be added and types to be enabled for formulas</summary>
 	public static class Features {
-		/// <summary>Whether formula type specification should be deduced from any types in the loaded assemblies</summary>
+		/// <summary>Whether formula type description should be deduced from any types in the loaded assemblies</summary>
 		public static bool typeDeduction = true;
 
 		private static Dictionary<string, List<(object, MethodInfo)>> functions = new Dictionary<string, List<(object, MethodInfo)>>();
@@ -100,8 +100,8 @@ namespace Formulas {
 
 		internal static bool Castable(Type from, Type to) =>
 			to.IsAssignableFrom(from) || //Check can assign from into to
-			from.GetTypeInfo().GetMethod(OpImplicit, new[]{to}) != null || //Check if from specify conversion into to
-			to.GetTypeInfo().GetMethod(OpImplicit, new[]{from}) != null; //Check if to specify conversion into from
+			from.GetTypeInfo().GetMethod(OpImplicit, new[]{to}) != null || //Check if from implictly converts into to
+			to.GetTypeInfo().GetMethod(OpImplicit, new[]{from}) != null; //Check if to implictly converts into from
 
 		internal static (Type, Type) CompatibleType(Type lhs, string op, Type rhs) {
 			Type Method(Type a, Type b) {
