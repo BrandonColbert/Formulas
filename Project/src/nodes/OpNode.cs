@@ -114,7 +114,7 @@ namespace Formulas {
 								result = ((dynamic)left)[(int)rightNumberNode.value];
 							else
 								result = ((dynamic)left)[index];
-							
+
 							if(Number.From(result, out var n))
 								result = n;
 

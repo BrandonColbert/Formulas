@@ -7,7 +7,6 @@ namespace Formulas {
 	/// <summary>Any int, long, float, or double</summary>
 	public partial struct Number {
 		private float value;
-
 		public override bool Equals(object obj) => value.Equals(obj);
 		public override int GetHashCode() => value.GetHashCode();
 		public override string ToString() => value.ToString();
@@ -76,26 +75,6 @@ namespace Formulas {
 		public int CompareTo(object obj) => value.CompareTo(obj);
 	}
 
-	public partial struct Number : IConvertible {
-		public TypeCode GetTypeCode() => value.GetTypeCode();
-		public object ToType(Type conversionType, IFormatProvider provider) => Convert.ChangeType(value, conversionType, provider);
-		public bool ToBoolean(IFormatProvider provider) => Convert.ToBoolean(value, provider);
-		public byte ToByte(IFormatProvider provider) => Convert.ToByte(value, provider);
-		public char ToChar(IFormatProvider provider) => Convert.ToChar(value, provider);
-		public DateTime ToDateTime(IFormatProvider provider) => Convert.ToDateTime(value, provider);
-		public decimal ToDecimal(IFormatProvider provider) => Convert.ToDecimal(value, provider);
-		public double ToDouble(IFormatProvider provider) => Convert.ToDouble(value, provider);
-		public short ToInt16(IFormatProvider provider) => Convert.ToInt16(value, provider);
-		public int ToInt32(IFormatProvider provider) => Convert.ToInt32(value, provider);
-		public long ToInt64(IFormatProvider provider) => Convert.ToInt64(value, provider);
-		public sbyte ToSByte(IFormatProvider provider) => Convert.ToSByte(value, provider);
-		public float ToSingle(IFormatProvider provider) => Convert.ToSingle(value, provider);
-		public string ToString(IFormatProvider provider) => Convert.ToString(value, provider);
-		public ushort ToUInt16(IFormatProvider provider) => Convert.ToUInt16(value, provider);
-		public uint ToUInt32(IFormatProvider provider) => Convert.ToUInt32(value, provider);
-		public ulong ToUInt64(IFormatProvider provider) => Convert.ToUInt64(value, provider);
-	}
-
 	public partial struct Number : IComparable<Number>, IEquatable<Number> {
 		public int CompareTo(Number other) => value.CompareTo(other.value);
 		public bool Equals(Number other) => value.Equals(other.value);
@@ -127,6 +106,26 @@ namespace Formulas {
 		public bool Equals(double other) => value.Equals(other);
 		public static implicit operator Number(double value) => new Number{value = (float)value};
 		public static implicit operator double(Number number) => number.value;
+	}
+
+	public partial struct Number : IConvertible {
+		public TypeCode GetTypeCode() => value.GetTypeCode();
+		public object ToType(Type conversionType, IFormatProvider provider) => Convert.ChangeType(value, conversionType, provider);
+		public bool ToBoolean(IFormatProvider provider) => Convert.ToBoolean(value, provider);
+		public byte ToByte(IFormatProvider provider) => Convert.ToByte(value, provider);
+		public char ToChar(IFormatProvider provider) => Convert.ToChar(value, provider);
+		public DateTime ToDateTime(IFormatProvider provider) => Convert.ToDateTime(value, provider);
+		public decimal ToDecimal(IFormatProvider provider) => Convert.ToDecimal(value, provider);
+		public double ToDouble(IFormatProvider provider) => Convert.ToDouble(value, provider);
+		public short ToInt16(IFormatProvider provider) => Convert.ToInt16(value, provider);
+		public int ToInt32(IFormatProvider provider) => Convert.ToInt32(value, provider);
+		public long ToInt64(IFormatProvider provider) => Convert.ToInt64(value, provider);
+		public sbyte ToSByte(IFormatProvider provider) => Convert.ToSByte(value, provider);
+		public float ToSingle(IFormatProvider provider) => Convert.ToSingle(value, provider);
+		public string ToString(IFormatProvider provider) => Convert.ToString(value, provider);
+		public ushort ToUInt16(IFormatProvider provider) => Convert.ToUInt16(value, provider);
+		public uint ToUInt32(IFormatProvider provider) => Convert.ToUInt32(value, provider);
+		public ulong ToUInt64(IFormatProvider provider) => Convert.ToUInt64(value, provider);
 	}
 
 	public partial struct Number {
