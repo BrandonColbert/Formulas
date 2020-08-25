@@ -2,7 +2,7 @@ using Formulas;
 using NUnit.Framework;
 
 [TestFixture]
-abstract class TestTimes : FormulaTester {
+abstract class TimeBasic : FormulaTester {
 	const int count = 10000;
 
 	[Test]
@@ -17,14 +17,11 @@ abstract class TestTimes : FormulaTester {
 		for(var i = 0; i < count; i++)
 			TimeSolve(formula, input);
 	}
-}
 
-[TestFixture]
-class TimeFormula : TestTimes {
 	protected override IFormula Build(string source, params string[] rest) => new Formula(source, rest);
 }
 
 [TestFixture]
-class TimeFormulaCompile : TimeFormula {
+class TimeCompileBasic : TimeBasic {
 	protected override IFormula Build(string source, params string[] rest) => new Formula(source, rest).Compile();
 }

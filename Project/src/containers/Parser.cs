@@ -5,9 +5,6 @@ using System.Linq;
 namespace Formulas {
 	/// <summary>Parses formula text in useable information</summary>
 	class Parser {
-		/// <summary>Whether the formula was given with a description</summary>
-		public bool HasDescription => description != null;
-
 		private readonly string description;
 		private readonly string definition;
 
@@ -22,6 +19,9 @@ namespace Formulas {
 				description = null;
 			}
 		}
+
+		/// <summary>Whether the formula was given with a description</summary>
+		public bool HasDescription => description != null;
 
 		/// <summary>Creates a syntax tree from the right side of the formula</summary>
 		/// <returns>The created syntax tree</returns>

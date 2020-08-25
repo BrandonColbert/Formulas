@@ -4,11 +4,19 @@ using System.Text;
 namespace Formulas {
 	/// <summary>Allows tokens to be extracted from text</summary>
 	class Tokenizer {
+		private LinkedList<char> content;
+
+		/// <param name="text">Text to tokenize</param>
+		public Tokenizer(string text) => content = new LinkedList<char>(text);
+
 		/// <summary>Whether any text remains to be tokenized</summary>
 		public bool Empty => content.Count == 0;
 
 		/// <summary>Next character (not consumed)</summary>
 		public char Next => content.First.Value;
+
+		/// <summary>Last encountered operator or null terminator if none yet</summary>
+		public char LastOperator { get; private set; } = '\0';
 
 		/// <summary>Next encountered operator or null terminator if none found (not consumed)</summary>
 		public char NextOperator {
@@ -28,14 +36,9 @@ namespace Formulas {
 			}
 		}
 
-		private LinkedList<char> content;
-
-		/// <param name="text">Text to tokenize</param>
-		public Tokenizer(string text) => content = new LinkedList<char>(text);
-
 		/// <returns>The next character</returns>
 		public char Consume() {
-			var value = content.First.Value;
+			var value = Next;
 			content.RemoveFirst();
 
 			return value;
@@ -46,23 +49,22 @@ namespace Formulas {
 			var value = new StringBuilder();
 
 			//Append [0-9a-zA-Z_] and ignore whitespace until next character fails to match
-			while(content.Count > 0) {
-				switch(content.First.Value) {
+			while(!Empty) {
+				switch(Next) {
 					case '_':
 						break;
 					default:
-						if(char.IsLetterOrDigit(content.First.Value))
+						if(char.IsLetterOrDigit(Next))
 							break;
-						if(char.IsWhiteSpace(content.First.Value)) {
-							content.RemoveFirst();
+						if(char.IsWhiteSpace(Next)) {
+							Consume();
 							continue;
 						}
 
 						return value.ToString();
 				}
 
-				value.Append(content.First.Value);
-				content.RemoveFirst();
+				value.Append(Consume());
 			}
 
 			return value.ToString();
@@ -73,25 +75,23 @@ namespace Formulas {
 			if(content.Count == 0)
 				throw new ParseException("Text cannot come next in an empty string");
 
-			while(char.IsWhiteSpace(content.First.Value))
-				content.RemoveFirst();
+			while(char.IsWhiteSpace(Next))
+				Consume();
 
-			if(!char.IsLetter(content.First.Value))
+			if(!char.IsLetter(Next))
 				throw new ParseException($"A variable does not come next in '{string.Concat(content)}'");
 
 			var value = new StringBuilder();
 
 			//Add variable name
-			value.Append(content.First.Value);
-			content.RemoveFirst();
+			value.Append(Consume());
 
 			//If no subscript delimiter found, variable has no subscript
-			if(content.Count == 0 || content.First.Value != '_')
+			if(content.Count == 0 || Next != '_')
 				return value.ToString();
 
 			//Add subscript symbol
-			value.Append(content.First.Value);
-			content.RemoveFirst();
+			value.Append(Consume());
 
 			//Add next word as subscript
 			value.Append(ConsumeName());
@@ -104,23 +104,22 @@ namespace Formulas {
 			var value = new StringBuilder();
 
 			//Append [0-9\.] and ignore whitespace until next character fails to match
-			while(content.Count > 0) {
-				switch(content.First.Value) {
+			while(!Empty) {
+				switch(Next) {
 					case '.':
 						break;
 					default:
-						if(char.IsDigit(content.First.Value))
+						if(char.IsDigit(Next))
 							break;
-						if(char.IsWhiteSpace(content.First.Value)) {
-							content.RemoveFirst();
+						if(char.IsWhiteSpace(Next)) {
+							Consume();
 							continue;
 						}
 
 						return value.ToString();
 				}
 
-				value.Append(content.First.Value);
-				content.RemoveFirst();
+				value.Append(Consume());
 			}
 
 			return value.ToString();
@@ -134,7 +133,7 @@ namespace Formulas {
 			if(Number.TryParse(value, out var number))
 				return number;
 
-			throw new ParseException($"Unable to convert '{value}' from '{value}{string.Concat(content)}' to a number");
+			throw new ParseException($"Unable to convert '{value}' before '{string.Concat(content)}' to a number");
 		}
 
 		/// <returns>Next typename</returns>
@@ -142,8 +141,8 @@ namespace Formulas {
 			var value = new StringBuilder();
 			var depth = 0;
 
-			while(content.Count > 0) {
-				switch(content.First.Value) {
+			while(!Empty) {
+				switch(Next) {
 					case '<':
 						depth++;
 						break;
@@ -158,18 +157,17 @@ namespace Formulas {
 					case '_':
 						break;
 					default:
-						if(char.IsLetterOrDigit(content.First.Value))
+						if(char.IsLetterOrDigit(Next))
 							break;
-						if(char.IsWhiteSpace(content.First.Value)) {
-							content.RemoveFirst();
+						if(char.IsWhiteSpace(Next)) {
+							Consume();
 							continue;
 						}
 
 						return value.ToString();
 				}
 
-				value.Append(content.First.Value);
-				content.RemoveFirst();
+				value.Append(Consume());
 			}
 
 			return value.ToString();
@@ -177,14 +175,15 @@ namespace Formulas {
 
 		/// <returns>Next node</returns>
 		public Node ConsumeNode() {
-			var next = content.First.Value;
-			content.RemoveFirst();
+			var next = Consume();
 
 			//Ignore leading whitespace
-			while(char.IsWhiteSpace(next)) {
-				next = content.First.Value;
-				content.RemoveFirst();
-			}
+			while(char.IsWhiteSpace(next))
+				next = Consume();
+
+			//Save last operator
+			if(Op.Is(next))
+				LastOperator = next;
 
 			switch(next) {
 				case Op.Add: //Account for operators
@@ -208,9 +207,8 @@ namespace Formulas {
 					var subtext = new StringBuilder();
 
 					//Capture all content within same-level parenthesis
-					while(content.Count > 0) {
-						next = content.First.Value;
-						content.RemoveFirst();
+					while(!Empty) {
+						next = Consume();
 
 						if(next == Op.Gpo)
 							depth++;
@@ -232,9 +230,8 @@ namespace Formulas {
 					var subtext = new StringBuilder();
 
 					//Capture all content within same-level vertical bars
-					while(content.Count > 0) {
-						next = content.First.Value;
-						content.RemoveFirst();
+					while(!Empty) {
+						next = Consume();
 
 						if(next == Op.Gpo)
 							depth++;
@@ -253,18 +250,23 @@ namespace Formulas {
 					//Undo dequeue since letter will be used in text/number node
 					content.AddFirst(next);
 
-					if(char.IsLetter(next)) //Beginning with a letter indicates variable, property, or function
+					if(char.IsLetter(next)) { //Beginning with a letter indicates variable, property, or function
+						switch(LastOperator) {
+							case Op.Idx:
+								return new NameNode(ConsumeName());
+						}
+
 						switch(NextOperator) {
 							case Op.Mag:
 							case Op.Gpo:
 								return new NameNode(ConsumeName());
-							default:
-								return new VariableNode(ConsumeVariable());
 						}
-					else if(char.IsDigit(next)) //Beginning with a digit indicates a number
+
+						return new VariableNode(ConsumeVariable());
+					} else if(char.IsDigit(next)) //Beginning with a digit indicates a number
 						return new NumberNode(ConsumeNumber());
 					else //Unrecognized symbol otherwise
-						throw new ParseException($"Unexpected symbol '{next}' in '{string.Concat(content)}'");
+						throw new ParseException($"Unexpected symbol '{next}' at '{string.Concat(content)}'");
 			}
 		}
 	}

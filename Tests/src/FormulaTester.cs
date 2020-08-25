@@ -7,18 +7,15 @@ using NUnit.Framework;
 
 [TestFixture]
 abstract class FormulaTester {
-	private const double Precision = 0.001;
+	public const double Precision = 0.001;
 
-	private List<double>
-		buildTimes = new List<double>(),
-		solveTimes = new List<double>();
+	private List<double> buildTimes = new List<double>();
+	private List<double> solveTimes = new List<double>();
 
 	[OneTimeTearDown]
 	public void TearDown() => TestContext.Progress.WriteLine($"{GetType().Name}\n\tBuild: {AvgNoOutliers(buildTimes)}ms\n\tSolve: {AvgNoOutliers(solveTimes)}ms");
 
 	protected abstract IFormula Build(string source, params string[] rest);
-	protected void Approximately(Number lhs, Number rhs) => Assert.AreEqual(lhs, rhs, Precision);
-	protected void Approximately(Number lhs, Number rhs, string message) => Assert.AreEqual(lhs, rhs, Precision, message);
 
 	protected object TimeSolve(IFormula formula, params object[] inputs) {
 		var timer = Stopwatch.StartNew();
