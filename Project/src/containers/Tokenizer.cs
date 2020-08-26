@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Formulas {
@@ -9,11 +10,32 @@ namespace Formulas {
 		/// <param name="text">Text to tokenize</param>
 		public Tokenizer(string text) => content = new LinkedList<char>(text);
 
-		/// <summary>Whether any text remains to be tokenized</summary>
-		public bool Empty => content.Count == 0;
+		/// <summary>Remaining text that can be tokenized</summary>
+		public string Remaining => new string(content.ToArray());
 
-		/// <summary>Next character (not consumed)</summary>
-		public char Next => content.First.Value;
+		/// <summary>Whether any text remains to be tokenized</summary>
+		public bool Empty => Next == 0;
+
+		/// <summary>Next non-whitespace character (not consumed) or null terminal if empty</summary>
+		public char Next {
+			get {
+				if(content.Count == 0)
+					return '\0';
+
+				var value = content.First.Value;
+
+				while(char.IsWhiteSpace(value)) {
+					content.RemoveFirst();
+
+					if(content.Count == 0)
+						return '\0';
+
+					value = content.First.Value;
+				}
+
+				return value;
+			}
+		}
 
 		/// <summary>Last encountered operator or null terminator if none yet</summary>
 		public char LastOperator { get; private set; } = '\0';
@@ -56,10 +78,6 @@ namespace Formulas {
 					default:
 						if(char.IsLetterOrDigit(Next))
 							break;
-						if(char.IsWhiteSpace(Next)) {
-							Consume();
-							continue;
-						}
 
 						return value.ToString();
 				}
@@ -72,11 +90,8 @@ namespace Formulas {
 
 		/// <returns>Next variable</returns>
 		public string ConsumeVariable() {
-			if(content.Count == 0)
+			if(Empty)
 				throw new ParseException("Text cannot come next in an empty string");
-
-			while(char.IsWhiteSpace(Next))
-				Consume();
 
 			if(!char.IsLetter(Next))
 				throw new ParseException($"A variable does not come next in '{string.Concat(content)}'");
@@ -87,7 +102,7 @@ namespace Formulas {
 			value.Append(Consume());
 
 			//If no subscript delimiter found, variable has no subscript
-			if(content.Count == 0 || Next != '_')
+			if(Next != '_')
 				return value.ToString();
 
 			//Add subscript symbol
@@ -111,10 +126,6 @@ namespace Formulas {
 					default:
 						if(char.IsDigit(Next))
 							break;
-						if(char.IsWhiteSpace(Next)) {
-							Consume();
-							continue;
-						}
 
 						return value.ToString();
 				}
@@ -159,10 +170,6 @@ namespace Formulas {
 					default:
 						if(char.IsLetterOrDigit(Next))
 							break;
-						if(char.IsWhiteSpace(Next)) {
-							Consume();
-							continue;
-						}
 
 						return value.ToString();
 				}
@@ -176,10 +183,6 @@ namespace Formulas {
 		/// <returns>Next node</returns>
 		public Node ConsumeNode() {
 			var next = Consume();
-
-			//Ignore leading whitespace
-			while(char.IsWhiteSpace(next))
-				next = Consume();
 
 			//Save last operator
 			if(Op.Is(next))

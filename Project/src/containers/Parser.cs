@@ -68,10 +68,6 @@ namespace Formulas {
 			//First part is formula name
 			var name = tokenizer.ConsumeName();
 
-			//Ignore whitespace
-			while(!tokenizer.Empty && char.IsWhiteSpace(tokenizer.Next))
-				tokenizer.Consume();
-
 			//If done, only a name was specified
 			if(tokenizer.Empty)
 				return new Description(name);
@@ -90,7 +86,7 @@ namespace Formulas {
 				var variable = tokenizer.ConsumeVariable();
 				variables.Add(variable);
 
-				if(!tokenizer.Empty && tokenizer.Consume() == ':') {
+				if(tokenizer.Next == ':') {
 					tokenizer.Consume();
 
 					var typename = tokenizer.ConsumeTypename();
@@ -100,9 +96,6 @@ namespace Formulas {
 					types.Add(variable, type);
 				} else
 					types.Add(variable, typeof(object));
-
-				if(tokenizer.Empty)
-					continue;
 
 				switch(tokenizer.Next) {
 					case Op.Gpc:
@@ -116,10 +109,10 @@ namespace Formulas {
 			}
 
 			//Ensure close parenthesis was specified to stop acquiring variables
-			if(!tokenizer.Empty && tokenizer.Next == Op.Gpc)
-				tokenizer.Consume();
-			else
+			if(tokenizer.Next != Op.Gpc)
 				throw new ParseException($"Expected '{Op.Gpc}' to stop declaring variables in '{description}'");
+
+			tokenizer.Consume();
 
 			return new Description(name, variables, types);
 		}

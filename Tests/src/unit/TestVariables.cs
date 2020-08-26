@@ -6,6 +6,11 @@ class TestVariables : FormulaTester {
 	[TestCase(-1, ExpectedResult=-1)]
 	[TestCase(0, ExpectedResult=0)]
 	[TestCase(1, ExpectedResult=1)]
+	public object OneTypeless(int a) => TimeSolve(TimeBuild("f(x) = x"), a);
+
+	[TestCase(-1, ExpectedResult=-1)]
+	[TestCase(0, ExpectedResult=0)]
+	[TestCase(1, ExpectedResult=1)]
 	public object OneInt(int a) => TimeSolve(TimeBuild("f(x: int) = x"), a);
 	
 	[TestCase(1, 2, ExpectedResult=3)]

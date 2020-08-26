@@ -40,10 +40,10 @@ new Formula("f(x, y, z) = 3(x/y + z^2)").Solve(8, 2, 4);
 ## Precedence (Highest First)
 | Symbol | Type | Associativity |
 |---|---|---|
-|`. :`| Binary | -> |
-|`-`| Unary | <- |
 |`( ) \|`| Grouping | -> |
+|`. :`| Binary | -> |
 |`^`|  Binary | -> |
+|`-`| Unary | <- |
 |`* / %`| Binary | -> |
 |`+ -`| Binary | -> |
 
