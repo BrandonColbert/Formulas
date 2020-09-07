@@ -104,10 +104,10 @@ namespace Formulas {
 			yield return this;
 		}
 
-		/// <summary>Attempts to reduce this node</summary>
-		/// <param name="node">Reduced node</param>
-		/// <returns>Whether reduction was possible</returns>
-		public virtual bool Reduce(out Node node) {
+		/// <summary>Attempts to reduce, expand, or convert this node</summary>
+		/// <param name="node">Resulting node</param>
+		/// <returns>Whether a result was provided</returns>
+		public virtual bool Amend(out Node node) {
 			node = null;
 			return false;
 		}

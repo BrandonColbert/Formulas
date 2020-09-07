@@ -13,23 +13,13 @@ namespace Formulas {
 		public OpNode(Operation op) => value = op;
 		public override string ToDisplayString() => $"(operation {value}){base.ToDisplayString()}";
 
-		public override bool Reduce(out Node node) {
-			NumberNode left = null, right = null;
+		public override bool Amend(out Node node) {
+			var left = Left && Left is NumberNode l ? l : null;
+			var right = Right && Right is NumberNode r ? r : null;
 
 			//Ensure both left and right sides are numbers
-			if(Left) {
-				if(!(Left is NumberNode l))
-					return base.Reduce(out node);
-
-				left = l;
-			}
-
-			if(Right) {
-				if(!(Right is NumberNode r))
-					return base.Reduce(out node);
-
-				right = r;
-			}
+			if(!left || !right)
+				return base.Amend(out node);
 
 			//If the operation is numeric, return a new number node with the computed value
 			switch(value) {
@@ -55,7 +45,7 @@ namespace Formulas {
 					node = new NumberNode(Math.Pow(left.value, right.value));
 					return true;
 				default:
-					return base.Reduce(out node);
+					return base.Amend(out node);
 			}
 		}
 
@@ -90,10 +80,12 @@ namespace Formulas {
 					result = (Number)Math.Pow((Number)ValueOf(Left), (Number)ValueOf(Right));
 					return true;
 				case Operation.Transform:
-					if(!(Left is TextNode leftTextNode))
-						throw new SolveException($"Transform function must be text, but '{Left}' was supplied for '{this}'");
+					if(!(Left is FunctionNode leftFunctionNode))
+						throw new SolveException($"Transform function must be provided, but '{Left}' was supplied for '{this}'");
 
-					result = Features.Function(leftTextNode.value, ValueOf(Right));
+					if(!leftFunctionNode.Apply(ValueOf(Right), out result))
+						throw new SolveException($"Unable to transform '{Right}' with function '{Left}'");
+
 					return true;
 				case Operation.Index: {
 					var left = ValueOf(Left);
@@ -260,12 +252,14 @@ namespace Formulas {
 					}
 				}
 				case Operation.Transform: {
-					if(!(Left is NameNode leftNameNode))
-						throw new CompileException($"Property must be a name, but '{Left}' was supplied for '{this}'");
+					if(!(Left is FunctionNode leftFunctionNode))
+						throw new CompileException($"Transform function must be provided, but '{Left}' was supplied for '{this}'");
 
 					var parameter = Right.Compile(desc, args);
-					var (target, method) = Features.MatchFunction(leftNameNode.value.ToLower(), parameter.Type);
+					if(!leftFunctionNode.Match(parameter.Type, out var function))
+						throw new CompileException($"Input of type {parameter.Type} can not be transformed by function '{Left}'");
 
+					var (target, method) = function;
 					var parameterType = method.GetParameters().First().ParameterType;
 					if(parameter.Type != parameterType)
 						parameter = Expression.Convert(parameter, parameterType);
@@ -310,19 +304,13 @@ namespace Formulas {
 					try {
 						return operation(left, right);
 					} catch(InvalidOperationException) {
-						var (leftType, rightType) = Features.CompatibleType(
-							left.Type,
-							value.MethodName(),
-							right.Type
+						if(!TypeMap.Coerce(value.MethodName(), left.Type, right.Type, out var leftType, out var rightType))
+							throw new CompileException($"Unable to '{value}' between types {Parser.GetTypename(right.Type)} and '{Parser.GetTypename(left.Type)}'");
+
+						return operation(
+							Expression.Convert(left, leftType),
+							Expression.Convert(right, rightType)
 						);
-
-						if(leftType != null && rightType != null)
-							return operation(
-								Expression.Convert(left, leftType),
-								Expression.Convert(right, rightType)
-							);
-
-						throw new CompileException($"Unable to '{value}' between types {Parser.GetTypename(right.Type)} and '{Parser.GetTypename(left.Type)}'");
 					}
 				}
 			}
