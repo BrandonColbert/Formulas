@@ -46,7 +46,7 @@ namespace Formulas {
 
 			//Reduce the tree
 			foreach(var node in current.Top) {
-				if(!node.Reduce(out var result))
+				if(!node.Amend(out var result))
 					continue;
 
 				result.Replace(node);
@@ -84,13 +84,17 @@ namespace Formulas {
 			//Capture the variables and their types until close parenthesis is encountered
 			while(!tokenizer.Empty && tokenizer.Next != Op.Gpc) {
 				var variable = tokenizer.ConsumeVariable();
+
+				if(types.ContainsKey(variable))
+					throw new ParseException($"The variable '{variable}' appears multiples times in '{description}'");
+
 				variables.Add(variable);
 
 				if(tokenizer.Next == ':') {
 					tokenizer.Consume();
 
 					var typename = tokenizer.ConsumeTypename();
-					if(!Features.FindType(typename, out var type))
+					if(!Features.Types.Find(typename, out var type))
 						throw new ParseException($"Type '{typename}' could not be found for variable '{variable}' in '{description}'");
 
 					types.Add(variable, type);

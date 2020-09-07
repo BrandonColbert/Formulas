@@ -6,15 +6,15 @@ namespace Formulas {
 		public override string ToString() => $"|{value}|";
 		public override string ToDisplayString() => $"(magnitude {value}){base.ToDisplayString()}";
 
-		public override bool Reduce(out Node node) {
-			if(!base.Reduce(out var group)) {
+		public override bool Amend(out Node node) {
+			if(!base.Amend(out var group)) {
 				node = group;
 				return false;
 			}
 
 			//Magnitude of the grouped simplification
 			node = new OpNode(Operation.Transform);
-			node.Usurp(new NameNode(TransformName));
+			node.Usurp(new FunctionNode(TransformName));
 			node.Append(group);
 
 			return true;

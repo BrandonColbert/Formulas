@@ -2,7 +2,7 @@ using Formulas;
 using NUnit.Framework;
 
 [TestFixture]
-abstract class TimeBasic : FormulaTester {
+class TimeBasic : FormulaTester {
 	const int count = 10000;
 
 	[Test]

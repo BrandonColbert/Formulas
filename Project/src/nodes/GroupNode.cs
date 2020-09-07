@@ -6,7 +6,7 @@ namespace Formulas {
 		public override string ToString() => $"({value})";
 		public override string ToDisplayString() => $"(group {value}){base.ToDisplayString()}";
 
-		public override bool Reduce(out Node node) {
+		public override bool Amend(out Node node) {
 			node = new Parser(value).CreateDefinition();
 			return true;
 		}
