@@ -1,18 +1,16 @@
+using Formulas;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
-using Formulas;
-using NUnit.Framework;
 
-[SetUpFixture]
-class Setup {
-	[OneTimeSetUp]
-	public void Start() {
+public class Start {
+	public static void Main(string[] args) {
 		Features.Types.Enable<int>("int");
 		Features.Types.Enable<float>("float");
 		Features.Types.Enable<double>("double");
 		Features.Types.Enable<bool>("bool");
 		Features.Types.Enable<string>("string");
+		Features.Types.Enable<Number>("number", "num");
 		Features.Types.Enable<Vector3>("vector3", "vec3");
 		Features.Types.Enable<Quaternion>("quaternion", "quat");
 		Features.Types.Enable<Dictionary<string, object>>("dictionary", "map");
@@ -44,5 +42,7 @@ class Setup {
 		Features.Transforms.Add<double, double>("tan", Math.Tan);
 		Features.Transforms.Add<float, Vector3>("uvs", v => Vector3.UnitY * v);
 		Features.Transforms.Add<Quaternion, Vector3>("vec", v => Vector3.Transform(Vector3.UnitZ, v));
+
+		new Calculator();
 	}
 }

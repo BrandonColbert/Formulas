@@ -54,6 +54,9 @@ namespace Formulas {
 				if(!node.Calculate(desc, inputs, out var r))
 					throw new SolveException($"Unable to calculate '{node}' in '{this}'");
 
+				if(Number.From(r, out var number))
+					return number;
+
 				return r;
 			}
 
@@ -77,7 +80,7 @@ namespace Formulas {
 					result = -(dynamic)ValueOf(Right);
 					return true;
 				case Operation.Power:
-					result = (Number)Math.Pow((Number)ValueOf(Left), (Number)ValueOf(Right));
+					result = Math.Pow((dynamic)ValueOf(Left), (dynamic)ValueOf(Right));
 					return true;
 				case Operation.Transform:
 					if(!(Left is FunctionNode leftFunctionNode))
@@ -93,23 +96,11 @@ namespace Formulas {
 					switch(Right) {
 						case TextNode rightTextNode: {
 							result = ((dynamic)left)[rightTextNode.value];
-
-							if(Number.From(result, out var n))
-								result = n;
-
 							break;
 						}
 						case NumberNode rightNumberNode: {
 							var index = rightNumberNode.value;
-
-							if(left.GetType().IsArray)
-								result = ((dynamic)left)[(int)rightNumberNode.value];
-							else
-								result = ((dynamic)left)[index];
-
-							if(Number.From(result, out var n))
-								result = n;
-
+							result = left.GetType().IsArray ? ((dynamic)left)[(int)rightNumberNode.value] : ((dynamic)left)[index];
 							break;
 						}
 						default:
@@ -139,9 +130,6 @@ namespace Formulas {
 						default:
 							throw new SolveException($"Member '{members[0].Name}' of type '{type.Name}' descified by '{Left}' is not a field or property");
 					}
-
-					if(Number.From(result, out var n))
-						result = n;
 
 					return true;
 				}
@@ -179,7 +167,7 @@ namespace Formulas {
 						var getter = Microsoft.CSharp.RuntimeBinder.Binder.GetMember(
 							CSharpBinderFlags.None,
 							rightNameNode.value,
-							Features.GetContext(),
+							Glue.GetContext(),
 							new[]{CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null)} //Instance
 						);
 
@@ -223,7 +211,7 @@ namespace Formulas {
 						case 0: { //No indexer found, use dynamic index
 							var indexer = Microsoft.CSharp.RuntimeBinder.Binder.GetIndex(
 								CSharpBinderFlags.None,
-								Features.GetContext(),
+								Glue.GetContext(),
 								new[]{
 									CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null), //Instance
 									CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null) //Parameter
@@ -264,11 +252,10 @@ namespace Formulas {
 					if(parameter.Type != parameterType)
 						parameter = Expression.Convert(parameter, parameterType);
 
-					return Expression.Call(
-						Expression.Constant(target),
-						method,
-						parameter
-					);
+					if(method.IsStatic)
+						return Expression.Call(method, parameter);
+					else
+						return Expression.Call(Expression.Constant(target), method, parameter);
 				}
 				default: {
 					Func<Expression, Expression, BinaryExpression> operation;
@@ -296,16 +283,16 @@ namespace Formulas {
 					var left = Left.Compile(desc, args);
 					var right = Right.Compile(desc, args);
 
-					if(Number.Is(left.Type) && left.Type != typeof(Number))
+					if(Number.IsNumericPrimitive(left.Type))
 						left = Expression.Convert(left, typeof(Number));
-					if(Number.Is(right.Type) && right.Type != typeof(Number))
+					if(Number.IsNumericPrimitive(right.Type))
 						right = Expression.Convert(right, typeof(Number));
 
 					try {
 						return operation(left, right);
 					} catch(InvalidOperationException) {
-						if(!TypeMap.Coerce(value.MethodName(), left.Type, right.Type, out var leftType, out var rightType))
-							throw new CompileException($"Unable to '{value}' between types {Parser.GetTypename(right.Type)} and '{Parser.GetTypename(left.Type)}'");
+						if(!Glue.Coerce(value.MethodName(), left.Type, right.Type, out var leftType, out var rightType))
+							throw new CompileException($"Unable to '{value}' between '{Parser.GetTypename(right.Type)}' and '{Parser.GetTypename(left.Type)}'");
 
 						return operation(
 							Expression.Convert(left, leftType),

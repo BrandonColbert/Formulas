@@ -26,6 +26,15 @@ abstract class FormulaTester {
 		return result;
 	}
 
+	protected T TimeSolve<T>(IFormula formula, params object[] inputs) {
+		var timer = Stopwatch.StartNew();
+		var result = formula.Solve<T>(inputs);
+		timer.Stop();
+		solveTimes.Add(timer.Elapsed.TotalMilliseconds);
+
+		return result;
+	}
+
 	protected IFormula TimeBuild(string source, params string[] rest) {
 		var timer = Stopwatch.StartNew();
 		var result = Build(source, rest);

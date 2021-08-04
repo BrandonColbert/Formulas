@@ -39,7 +39,7 @@ namespace Formulas {
 					throw new ParseException($"Declaration '{formula}' must have a name to be used in '{this}'");
 
 				if(formula.description.variables.Count > 0)
-					throw new ParseException($"Declaration '{formula}' must not include paramters to be used in '{this}'");
+					throw new ParseException($"Declaration '{formula}' must not include parameters to be used in '{this}'");
 
 				foreach(var node in definition) {
 					if(!(node is VariableNode variable))

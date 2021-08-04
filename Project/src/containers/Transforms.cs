@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 
 namespace Formulas {
@@ -29,7 +30,7 @@ namespace Formulas {
 					return transform;
 
 				foreach(var flavor in flavors)
-					if(TypeMap.Castable(flavor.Key, inputType))
+					if(Glue.Castable(flavor.Key, inputType))
 						return flavor.Value;
 			}
 
@@ -48,12 +49,46 @@ namespace Formulas {
 		/// <typeparam name="T">Input type</typeparam>
 		/// <typeparam name="TResult">Output type</typeparam>
 		public void Add<T, TResult>(string name, Func<T, TResult> function) {
+			var scenario = (Number.IsNumericPrimitive<T>() ? 0b01 : 0b00) | (Number.IsNumericPrimitive<TResult>() ? 0b10 : 0b00);
+
+			switch(scenario) {
+				case 0b00:
+					Add(name, function as Delegate);
+					break;
+				default:
+					var par = Expression.Parameter((scenario & 0b01) == 0b01 ? typeof(Number) : typeof(T), "input");
+					var callPar = (scenario & 0b01) == 0b01 ? Expression.Convert(par, typeof(T)) : (Expression)par;
+					var call = function.Method.IsStatic ? Expression.Call(function.Method, callPar) : Expression.Call(Expression.Constant(function.Target), function.Method, callPar);
+					var callResult = (scenario & 0b10) == 0b10 ? Expression.Convert(call, typeof(Number)) : (Expression)call;
+
+					switch(scenario) {
+						case 0b01:
+							Add(name, new Func<Number, TResult>(Expression.Lambda<Func<Number, TResult>>(callResult, par).Compile()) as Delegate);
+							break;
+						case 0b10:
+							Add(name, new Func<T, Number>(Expression.Lambda<Func<T, Number>>(callResult, par).Compile()) as Delegate);
+							break;
+						case 0b11:
+							Add(name, new Func<Number, Number>(Expression.Lambda<Func<Number, Number>>(callResult, par).Compile()) as Delegate);
+							break;
+					}
+					break;
+			}
+		}
+
+		/// <summary>Adds a transform function</summary>
+		/// <param name="name">Transform name</param>
+		/// <param name="function">Function defining its behavior</param>
+		public void Add(string name, Delegate function) {
+			if(function.Method.GetParameters().Length != 1)
+				throw new FormulaException($"Transform functions use 1 parameter, but {function.Method.GetParameters().Length} are specified");
+
 			if(!registry.TryGetValue(name, out var flavors)) {
 				flavors = new Dictionary<Type, Function>();
 				registry.Add(name, flavors);
 			}
 
-			flavors.Add(typeof(T), new Function{
+			flavors.Add(function.Method.GetParameters()[0].ParameterType, new Function{
 				target = function.Target,
 				method = function.Method
 			});
