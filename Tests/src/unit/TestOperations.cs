@@ -8,37 +8,37 @@ class TestOperations : FormulaTester {
 	[TestCase(15, 13, ExpectedResult=28)]
 	[TestCase(48, 2048, ExpectedResult=2096)]
 	[TestCase(3.14f, 3.14f, ExpectedResult=6.28f)]
-	public double Add(float a, float b) => (Number)TimeSolve(TimeBuild($"{a} + {b}"));
+	public double Add(float a, float b) => TimeSolve<float>(TimeBuild($"{a} + {b}"));
 
 	[TestCase(2, 1, ExpectedResult=1)]
 	[TestCase(1, 2, ExpectedResult=-1)]
 	[TestCase(3, 3, ExpectedResult=0)]
-	public float Subtract(float a, float b) => (Number)TimeSolve(TimeBuild($"{a} - {b}"));
+	public float Subtract(float a, float b) => TimeSolve<float>(TimeBuild($"{a} - {b}"));
 
 	[TestCase(2, 3, ExpectedResult=6)]
 	[TestCase(12, 5, ExpectedResult=60)]
-	public float Multiply(float a, float b) => (Number)TimeSolve(TimeBuild($"{a} * {b}"));
+	public float Multiply(float a, float b) => TimeSolve<float>(TimeBuild($"{a} * {b}"));
 	
 	[TestCase(6, 2, ExpectedResult=3)]
 	[TestCase(15, 3, ExpectedResult=5)]
 	[TestCase(1, 4, ExpectedResult=0.25)]
-	public float Divide(float a, float b) => (Number)TimeSolve(TimeBuild($"{a} / {b}"));
+	public float Divide(float a, float b) => TimeSolve<float>(TimeBuild($"{a} / {b}"));
 	
 	[TestCase(6, 5, ExpectedResult=1)]
 	[TestCase(4, 5, ExpectedResult=4)]
 	[TestCase(19, 7, ExpectedResult=5)]
-	public float Modulus(float a, float b) => (Number)TimeSolve(TimeBuild($"{a} % {b}"));
+	public float Modulus(float a, float b) => TimeSolve<float>(TimeBuild($"{a} % {b}"));
 
 	[TestCase(2, 3, ExpectedResult=8)]
 	[TestCase(3, 3, ExpectedResult=27)]
 	[TestCase(182, 2, ExpectedResult=33124)]
-	public float Exponentiate(float a, float b) => (Number)TimeSolve(TimeBuild($"{a}^{b}"));
+	public float Exponentiate(float a, float b) => TimeSolve<float>(TimeBuild($"{a}^{b}"));
 	
 	[TestCase(1, ExpectedResult=-1)]
 	[TestCase(2.5f, ExpectedResult=-2.5f)]
 	[TestCase(88, ExpectedResult=-88)]
 	[TestCase(0, ExpectedResult=0)]
-	public float Negate(float a) => (Number)TimeSolve(TimeBuild($"-{a}"));
+	public float Negate(float a) => TimeSolve<float>(TimeBuild($"-{a}"));
 
 	[TestCase("abc", "Length", ExpectedResult=3)]
 	[TestCase("c-3po", "Length", ExpectedResult=5)]

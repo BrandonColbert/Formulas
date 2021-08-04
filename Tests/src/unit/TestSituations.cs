@@ -10,7 +10,7 @@ class TestSituations : FormulaTester {
 	public object Precedence1() => TimeSolve(TimeBuild("3 * 2^2"));
 
 	[TestCase(542.2)]
-	public void Precedence2(double expected) => Assert.AreEqual(expected, (Number)TimeSolve(TimeBuild("(4 * 3|2 + 7|5 + 5 / (2 + 3)^2 + 2)")), Precision);
+	public void Precedence2(double expected) => Assert.AreEqual(expected, TimeSolve<double>(TimeBuild("(4 * 3|2 + 7|5 + 5 / (2 + 3)^2 + 2)")), Precision);
 
 	[TestCase(ExpectedResult=7)]
 	public object Precedence3() => TimeSolve(TimeBuild("f(b: int) = (4 - 2)b + 1"), 3);
@@ -19,10 +19,10 @@ class TestSituations : FormulaTester {
 	public object Precedence4() => TimeSolve(TimeBuild("(3 + 2)(3 - 1)"));
 
 	[Test]
-	public void Precedence5() => Assert.AreEqual(-0.23077, (Number)TimeSolve(TimeBuild($"2 * ((3 - 4) + (5 / (6 + 7))) - 1 + 8 % 3")), Precision);
+	public void Precedence5() => Assert.AreEqual(-0.23077, TimeSolve<double>(TimeBuild($"2 * ((3 - 4) + (5 / (6 + 7))) - 1 + 8 % 3")), Precision);
 
 	[Test]
-	public void Precedence6() => Assert.AreEqual(4, (Number)TimeSolve(TimeBuild("f(x: int, y: int) = 2 * (x + y) - x^3"), 2, 4), Precision);
+	public void Precedence6() => Assert.AreEqual(4, TimeSolve<int>(TimeBuild("f(x: int, y: int) = 2 * (x + y) - x^3"), 2, 4), Precision);
 
 	[TestCase(ExpectedResult=-1)]
 	public object SingleValueGroup() => TimeSolve(TimeBuild("2 - (3)"));
@@ -31,7 +31,7 @@ class TestSituations : FormulaTester {
 	public object MultipleSingleValueGroups() => TimeSolve(TimeBuild("f(c: int) = ((3)(c)) - (c)"), 2);
 
 	[TestCase(ExpectedResult=4)]
-	public object MultipleSingleValueMagnitudes() => TimeSolve(TimeBuild("f(c: num) = |(|3|)(|c|)| - |c|"), (Number)2);
+	public object MultipleSingleValueMagnitudes() => TimeSolve(TimeBuild("f(c: double) = |(|3|)(|c|)| - |c|"), 2.0);
 
 	[TestCase(ExpectedResult=1)]
 	public object NegatedGroup1() => TimeSolve(TimeBuild("-(2 - (3))"));
@@ -55,7 +55,7 @@ class TestSituations : FormulaTester {
 	public void VectorMagnitude() => Assert.AreEqual(new Vector3(1, 2, 3).Length(), TimeSolve(TimeBuild("f(x: vec3) = |x|"), new Vector3(1, 2, 3)));
 
 	[TestCase(2.2, 2, 1.1)]
-	public void IntByDouble(double expected, int x, double y) => Assert.AreEqual(expected, (Number)TimeSolve(TimeBuild("f(x: int, y: double) = x * y"), x, y), Precision);
+	public void IntByDouble(double expected, int x, double y) => Assert.AreEqual(expected, TimeSolve<double>(TimeBuild("f(x: int, y: double) = x * y"), x, y), Precision);
 
 	[TestCase(0.75f)]
 	public void NumberByVector(float scalar) => Assert.AreEqual(new Vector3(1, 2, 3) * scalar, TimeSolve(TimeBuild($"f(x: vec3) = {scalar}x"), new Vector3(1, 2, 3)));
@@ -97,7 +97,11 @@ class TestSituations : FormulaTester {
 	public object AnonymousMember(int value) => TimeSolve(TimeBuild($"a.Length"), new{Length = value});
 
 	[Test]
-	public void AnonymousIndexedMemberByVector() => Assert.AreEqual(Vector3.UnitX, TimeSolve(TimeBuild($"f(a: map) = a:b.c * rvs(1)"), new Dictionary<string, object>(){["b"] = new{c = (Number)1}}));
+	public void AnonymousIndexedMemberByVector() => Assert.AreEqual(Vector3.UnitX, TimeSolve(TimeBuild($"f(a: map) = a:b.c * rvs(1)"), new Dictionary<string, object>(){
+		["b"] = new{
+			c = 1
+		}
+	}));
 
 	protected override IFormula Build(string source, params string[] rest) => new Formula(source, rest);
 }

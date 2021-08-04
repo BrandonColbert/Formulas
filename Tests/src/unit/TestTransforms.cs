@@ -10,61 +10,61 @@ class TestTransforms : FormulaTester {
 	[TestCase(1)]
 	[TestCase((float)Math.PI)]
 	[TestCase(5f * (float)Math.PI)]
-	public void Sin(float v) => Assert.AreEqual((Number)Features.Transforms.Apply("sin", v), (Number)TimeSolve(TimeBuild($"sin({v})")), Precision);
+	public void Sin(float v) => Assert.AreEqual((Number)Features.Transforms.Apply("sin", v), TimeSolve<Number>(TimeBuild($"sin({v})")), Precision);
 
 	[TestCase(0)]
 	[TestCase(1)]
 	[TestCase((float)Math.PI)]
 	[TestCase(5f * (float)Math.PI)]
-	public void Asin(float v) => Assert.AreEqual((Number)Features.Transforms.Apply("asin", v), (Number)TimeSolve(TimeBuild($"asin({v})")), Precision);
+	public void Asin(float v) => Assert.AreEqual((Number)Features.Transforms.Apply("asin", v), TimeSolve<Number>(TimeBuild($"asin({v})")), Precision);
 
 	[TestCase(0)]
 	[TestCase(1)]
 	[TestCase((float)Math.PI)]
 	[TestCase(5f * (float)Math.PI)]
-	public void Cos(float v) => Assert.AreEqual((Number)Features.Transforms.Apply("cos", v), (Number)TimeSolve(TimeBuild($"cos({v})")), Precision);
+	public void Cos(float v) => Assert.AreEqual((Number)Features.Transforms.Apply("cos", v), TimeSolve<Number>(TimeBuild($"cos({v})")), Precision);
 
 	[TestCase(0)]
 	[TestCase(1)]
 	[TestCase((float)Math.PI)]
 	[TestCase(5f * (float)Math.PI)]
-	public void Acos(float v) => Assert.AreEqual((Number)Features.Transforms.Apply("acos", v), (Number)TimeSolve(TimeBuild($"acos({v})")), Precision);
+	public void Acos(float v) => Assert.AreEqual((Number)Features.Transforms.Apply("acos", v), TimeSolve<Number>(TimeBuild($"acos({v})")), Precision);
 
 	[TestCase(0)]
 	[TestCase(1)]
 	[TestCase((float)Math.PI)]
 	[TestCase(5f * (float)Math.PI)]
-	public void Tan(float v) => Assert.AreEqual((Number)Features.Transforms.Apply("tan", v), (Number)TimeSolve(TimeBuild($"tan({v})")), Precision);
+	public void Tan(float v) => Assert.AreEqual((Number)Features.Transforms.Apply("tan", v), TimeSolve<Number>(TimeBuild($"tan({v})")), Precision);
 
 	[TestCase(0)]
 	[TestCase(1)]
 	[TestCase((float)Math.PI)]
 	[TestCase(5f * (float)Math.PI)]
-	public void Atan(float v) => Assert.AreEqual((Number)Features.Transforms.Apply("atan", v), (Number)TimeSolve(TimeBuild($"atan({v})")), Precision);
+	public void Atan(float v) => Assert.AreEqual((Number)Features.Transforms.Apply("atan", v), TimeSolve<Number>(TimeBuild($"atan({v})")), Precision);
 
 	[TestCase(0)]
 	[TestCase(2)]
 	[TestCase(16)]
 	[TestCase(121)]
-	public void Sqrt(float v) => Assert.AreEqual((Number)Features.Transforms.Apply("sqrt", v), (Number)TimeSolve(TimeBuild($"sqrt({v})")), Precision);
+	public void Sqrt(float v) => Assert.AreEqual((Number)Features.Transforms.Apply("sqrt", v), TimeSolve<Number>(TimeBuild($"sqrt({v})")), Precision);
 
 	[TestCase(0)]
 	[TestCase(1)]
 	[TestCase((float)Math.E)]
 	[TestCase(14)]
-	public void Ln(float v) => Assert.AreEqual((Number)Features.Transforms.Apply("ln", v), (Number)TimeSolve(TimeBuild($"ln({v})")), Precision);
+	public void Ln(float v) => Assert.AreEqual((Number)Features.Transforms.Apply("ln", v), TimeSolve<Number>(TimeBuild($"ln({v})")), Precision);
 
 	[TestCase(0)]
 	[TestCase(1)]
 	[TestCase((float)Math.E)]
 	[TestCase(14)]
-	public void Log(float v) => Assert.AreEqual((Number)Features.Transforms.Apply("log", v), (Number)TimeSolve(TimeBuild($"log({v})")), Precision);
+	public void Log(float v) => Assert.AreEqual((Number)Features.Transforms.Apply("log", v), TimeSolve<Number>(TimeBuild($"log({v})")), Precision);
 
 	[TestCase(-18)]
 	[TestCase(-1)]
 	[TestCase(1)]
 	[TestCase(18)]
-	public void Sgn(float v) => Assert.AreEqual((Number)Features.Transforms.Apply("sgn", v), (Number)TimeSolve(TimeBuild($"sgn({v})")), Precision);
+	public void Sgn(float v) => Assert.AreEqual((Number)Features.Transforms.Apply("sgn", v), TimeSolve<Number>(TimeBuild($"sgn({v})")), Precision);
 
 	[TestCase(-19)]
 	[TestCase(0)]
@@ -114,11 +114,11 @@ class TestTransforms : FormulaTester {
 	[TestCase(1024)]
 	public void Rnd(float v) {
 		var count = 100;
-		var generated = new HashSet<float>();
+		var generated = new HashSet<double>();
 		var formula = TimeBuild($"rnd({v}");
 
 		for(var i = 0; i < count; i++)
-			generated.Add((Number)TimeSolve(formula));
+			generated.Add(TimeSolve<Number>(formula));
 
 
 		if(generated.Count == 1)
@@ -129,19 +129,19 @@ class TestTransforms : FormulaTester {
 			TestContext.Error.WriteLine($"'rnd({v})' transform is not consistent as {generated.Count}/{count} numbers were unique");
 	}
 
-	[TestCase(-(float)Math.PI)]
+	[TestCase(-Math.PI)]
 	[TestCase(-1)]
 	[TestCase(0)]
 	[TestCase(1)]
-	[TestCase((float)Math.PI)]
-	public void NumericAbs(float v) => Assert.AreEqual((Number)Features.Transforms.Apply("abs", v), (Number)TimeSolve(TimeBuild($"abs({v})")), Precision);
+	[TestCase(Math.PI)]
+	public void NumericAbs(double v) => Assert.AreEqual((Number)Features.Transforms.Apply("abs", v), TimeSolve<Number>(TimeBuild($"abs({v})")), Precision);
 
-	[TestCase(-(float)Math.PI)]
+	[TestCase(-Math.PI)]
 	[TestCase(-1)]
 	[TestCase(0)]
 	[TestCase(1)]
-	[TestCase((float)Math.PI)]
-	public void NumericNml(float v) => Assert.AreEqual((Number)Features.Transforms.Apply("nml", v), (Number)TimeSolve(TimeBuild($"nml({v})")), Precision);
+	[TestCase(Math.PI)]
+	public void NumericNml(double v) => Assert.AreEqual((Number)Features.Transforms.Apply("nml", v), TimeSolve<Number>(TimeBuild($"nml({v})")), Precision);
 
 	[TestCase(1, 2, 3)]
 	[TestCase(19, -32, 5)]

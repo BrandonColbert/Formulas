@@ -10,17 +10,7 @@ namespace Formulas {
 	class VariableNode : TextNode {
 		public VariableNode(string text) : base(text) {}
 		public override string ToDisplayString() => $"(variable {value}){base.ToDisplayString()}";
-
-		public override bool Calculate(Description desc, Dictionary<string, object> inputs, out object result) {
-			if(inputs.TryGetValue(value, out result)) {
-				if(Number.From(result, out var number))
-					result = number;
-
-				return true;
-			}
-
-			return false;
-		}
+		public override bool Calculate(Description desc, Dictionary<string, object> inputs, out object result) => inputs.TryGetValue(value, out result);
 
 		public override Expression Compile(Description desc, ParameterExpression args) {
 			var index = desc.variables.IndexOf(value);

@@ -6,7 +6,7 @@ using System.Collections.Generic;
 namespace Formulas {
 	/// <summary>Any int, long, float, or double</summary>
 	public partial struct Number {
-		private float value;
+		private double value;
 		public override bool Equals(object obj) => value.Equals(obj);
 		public override int GetHashCode() => value.GetHashCode();
 		public override string ToString() => value.ToString();
@@ -26,10 +26,10 @@ namespace Formulas {
 				case long v: number.value = v; return true;
 				case ulong v: number.value = v; return true;
 				case float v: number.value = v; return true;
-				case decimal v: number.value = (float)v; return true;
-				case double v: number.value = (float)v; return true;
+				case decimal v: number.value = (double)v; return true;
+				case double v: number.value = (double)v; return true;
 				case Number v: number.value = v; return true;
-				default: number = float.NaN; return false;
+				default: number = double.NaN; return false;
 			}
 		}
 
@@ -38,12 +38,12 @@ namespace Formulas {
 		/// <param name="number">Resulting number</param>
 		/// <returns>Whether conversion was possible</returns>
 		public static bool TryParse(string value, out Number number) {
-			if(float.TryParse(value, out var result)) {
+			if(double.TryParse(value, out var result)) {
 				number = result;
 				return true;
 			}
 
-			number = float.NaN;
+			number = double.NaN;
 			return false;
 		}
 
@@ -53,7 +53,15 @@ namespace Formulas {
 
 		/// <typeparam name="T">Type to check</typeparam>
 		/// <returns>Whether the type is a number</returns>
-		public bool Is<T>() => Is(typeof(T));
+		public static bool Is<T>() => Is(typeof(T));
+
+		/// <param name="type">Type to check</param>
+		/// <returns>Whether the type is a numeric primitive</returns>
+		public static bool IsNumericPrimitive(Type type) => Is(type) && type != typeof(Number);
+
+		/// <typeparam name="T">Type to check</typeparam>
+		/// <returns>Whether the type is a numeric primitve</returns>
+		public static bool IsNumericPrimitive<T>() => IsNumericPrimitive(typeof(T));
 
 		private static HashSet<Type> numericTypes = new HashSet<Type>(){
 			typeof(sbyte),
@@ -98,7 +106,7 @@ namespace Formulas {
 		public int CompareTo(float other) => value.CompareTo(other);
 		public bool Equals(float other) => value.Equals(other);
 		public static implicit operator Number(float value) => new Number{value = value};
-		public static implicit operator float(Number number) => number.value;
+		public static implicit operator float(Number number) => (float)number.value;
 	}
 
 	public partial struct Number : IComparable<double>, IEquatable<double> {

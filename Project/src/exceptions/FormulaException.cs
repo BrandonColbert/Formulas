@@ -2,7 +2,7 @@ using System;
 
 namespace Formulas {
 	/// <summary>Error when some stage of a formula fails</summary>
-	public abstract class FormulaException : Exception {
+	public class FormulaException : Exception {
 		/// <param name="message">Message describing the error</param>
 		public FormulaException(string message) : base(message) {}
 

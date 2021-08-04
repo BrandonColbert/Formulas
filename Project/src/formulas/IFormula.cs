@@ -1,3 +1,5 @@
+using System;
+
 namespace Formulas {
 	/// <summary>Describes a way to convert input values into an output value.</summary>
 	public interface IFormula {
@@ -17,6 +19,10 @@ namespace Formulas {
 
 			if(result is T v)
 				return v;
+
+			try {
+				return (T)System.Convert.ChangeType(result, typeof(T));
+			} catch(InvalidCastException) {}
 
 			throw new SolveException($"Solution '{result}' of type {result?.GetType().ToString() ?? "unknown"} could not be converted to {typeof(T)}");
 		}
